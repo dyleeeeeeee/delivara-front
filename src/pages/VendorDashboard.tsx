@@ -83,6 +83,33 @@ export default function VendorDashboard() {
     return () => unsubs.forEach((u) => u())
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!mapInstance) return
+
+    const snapToLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            mapInstance.flyTo({
+              center: [pos.coords.longitude, pos.coords.latitude],
+              zoom: 15,
+              essential: true,
+            })
+          },
+          (err) => console.warn('Could not get location:', err),
+          { enableHighAccuracy: true, timeout: 5000 }
+        )
+      }
+    }
+
+    // Snap to location on initial load (login)
+    snapToLocation()
+
+    // Listen for double-tap on Home button
+    window.addEventListener('snapToLocation', snapToLocation)
+    return () => window.removeEventListener('snapToLocation', snapToLocation)
+  }, [mapInstance])
+
   const activeJobs = jobs.filter((j) => j.status !== 'COMPLETED')
 
   return (

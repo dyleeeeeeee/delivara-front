@@ -41,7 +41,13 @@ export default function GlassNavBar() {
       {items.map((item) => (
         <button
           key={item.path}
-          onClick={() => navigate(item.path)}
+          onClick={() => {
+            if (location.pathname === item.path) {
+              window.dispatchEvent(new CustomEvent('snapToLocation'))
+            } else {
+              navigate(item.path)
+            }
+          }}
           className={`flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all ${
             location.pathname === item.path
               ? 'text-accent-primary'

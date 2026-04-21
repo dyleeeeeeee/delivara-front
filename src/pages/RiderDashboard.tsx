@@ -42,14 +42,20 @@ export default function RiderDashboard() {
         toast.show('📦 New delivery request!')
       }),
 
-      on('JOB_ACCEPTED', (data) => {
-        const d = data as { job_id: string; rider_id: string }
-        const { incomingRequest: req } = useJobsStore.getState()
-        if (req) {
-          setActiveJob({ ...req, id: d.job_id, status: 'ASSIGNED' })
-        }
+      on('JOB_ASSIGNED', (data) => {
+        const fullJob = data as any
+        setActiveJob(fullJob)
+        startWatching(fullJob.id)
         setIncomingRequest(null)
         toast.show('Job accepted!', 'success')
+      }),
+      on('JOB_TAKEN', (data) => {
+        const d = data as { job_id: string }
+        const { incomingRequest: req } = useJobsStore.getState()
+        if (req && req.id === d.job_id) {
+          setIncomingRequest(null)
+          toast.show('This job was taken by another rider', 'error')
+        }
       }),
       on('JOB_ASSIGN_FAILED', () => {
         setIncomingRequest(null)

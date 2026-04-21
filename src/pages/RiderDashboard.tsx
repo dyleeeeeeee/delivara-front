@@ -248,6 +248,24 @@ export default function RiderDashboard() {
               className="fixed bottom-0 left-0 right-0 z-40 glass rounded-t-3xl flex flex-col"
               style={{ maxHeight: '85vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
             >
+              {/* Action Buttons — Floating above the modal top-left */}
+              <div className="absolute -top-14 left-0 flex gap-2.5 px-5 z-50">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={declineJob}
+                  className="px-5 py-2 glass rounded-full text-text-secondary text-xs font-medium border border-white/10 shadow-2xl"
+                >
+                  Decline
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={acceptJob}
+                  className="px-7 py-2 bg-accent-primary rounded-full text-white text-xs font-bold glow-primary shadow-2xl shadow-accent-primary/30"
+                >
+                  Accept Job →
+                </motion.button>
+              </div>
+
               {/* Drag handle */}
               <div className="flex justify-center pt-4 pb-1 flex-shrink-0">
                 <motion.div
@@ -258,7 +276,7 @@ export default function RiderDashboard() {
               </div>
 
               {/* Scrollable content */}
-              <div className="overflow-y-auto flex-1 px-6 pt-2 pb-32">
+              <div className="overflow-y-auto flex-1 px-6 pt-2 pb-10">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-2xl bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center text-lg">
@@ -327,26 +345,7 @@ export default function RiderDashboard() {
                 </div>
               </div>
 
-              {/* Floating CTA buttons with gradient fade */}
-              <div
-                className="absolute bottom-0 left-0 right-0 px-6 pt-10 pb-6 bg-gradient-to-t from-bg-primary via-bg-primary/95 to-transparent z-50 flex gap-3"
-                style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-              >
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={declineJob}
-                  className="flex-1 py-3.5 glass-light rounded-2xl text-text-secondary text-sm font-medium border border-white/5"
-                >
-                  Decline
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={acceptJob}
-                  className="flex-[2] py-4 bg-accent-primary rounded-2xl text-white text-sm font-bold glow-primary shadow-2xl shadow-accent-primary/20"
-                >
-                  Accept Job →
-                </motion.button>
-              </div>
+
             </motion.div>
           </>
         )}

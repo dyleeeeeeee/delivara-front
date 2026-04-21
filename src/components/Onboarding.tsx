@@ -18,7 +18,6 @@ export default function Onboarding() {
   const [otp, setOtp] = useState('')
   const [devCode, setDevCode] = useState('')
   const [localError, setLocalError] = useState('')
-  const [name, setName] = useState('')
 
   const showError = localError || error || ''
 

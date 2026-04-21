@@ -36,9 +36,12 @@ export default function RiderDashboard() {
   useEffect(() => {
     const unsubs = [
       on('JOB_REQUEST', (data) => {
-        setIncomingRequest(data as never)
+        // Normalize: backend sends job_id, frontend uses .id
+        const normalized = { ...data, id: (data.job_id as string) ?? (data.id as string) }
+        setIncomingRequest(normalized as never)
         toast.show('📦 New delivery request!')
       }),
+
       on('JOB_ACCEPTED', (data) => {
         const d = data as { job_id: string; rider_id: string }
         const { incomingRequest: req } = useJobsStore.getState()
@@ -239,11 +242,11 @@ export default function RiderDashboard() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-40 glass rounded-t-3xl"
-              style={{ boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
+              className="fixed bottom-0 left-0 right-0 z-40 glass rounded-t-3xl flex flex-col"
+              style={{ maxHeight: '85vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
             >
-              {/* Pulse indicator */}
-              <div className="flex justify-center pt-4 pb-1">
+              {/* Drag handle */}
+              <div className="flex justify-center pt-4 pb-1 flex-shrink-0">
                 <motion.div
                   className="w-10 h-1 bg-accent-primary/60 rounded-full"
                   animate={{ opacity: [0.4, 1, 0.4] }}
@@ -251,7 +254,8 @@ export default function RiderDashboard() {
                 />
               </div>
 
-              <div className="px-6 pt-2 pb-8">
+              {/* Scrollable content */}
+              <div className="overflow-y-auto flex-1 px-6 pt-2">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-2xl bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center text-lg">
@@ -313,35 +317,39 @@ export default function RiderDashboard() {
                 )}
 
                 {/* Tracking slug */}
-                <div className="glass-light rounded-xl px-4 py-3 mb-5 flex items-center justify-between">
+                <div className="glass-light rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
                   <span className="text-xs text-text-secondary/60">Job ID</span>
                   <span className="text-xs font-mono text-text-secondary">
                     {(incomingRequest as Record<string, unknown>).tracking_slug as string}
                   </span>
                 </div>
+              </div>
 
-                {/* CTAs */}
-                <div className="flex gap-3">
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={declineJob}
-                    className="flex-1 py-3.5 glass-light rounded-2xl text-text-secondary text-sm font-medium"
-                  >
-                    Decline
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={acceptJob}
-                    className="flex-[2] py-3.5 bg-accent-primary rounded-2xl text-white text-sm font-bold glow-primary"
-                  >
-                    Accept Job →
-                  </motion.button>
-                </div>
+              {/* Sticky CTA buttons — always visible above safe area */}
+              <div
+                className="flex gap-3 px-6 pt-3 pb-6 flex-shrink-0"
+                style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+              >
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={declineJob}
+                  className="flex-1 py-3.5 glass-light rounded-2xl text-text-secondary text-sm font-medium"
+                >
+                  Decline
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={acceptJob}
+                  className="flex-[2] py-3.5 bg-accent-primary rounded-2xl text-white text-sm font-bold glow-primary"
+                >
+                  Accept Job →
+                </motion.button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
 
       {/* Active job panel */}
       {activeJob && !incomingRequest && (

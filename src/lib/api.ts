@@ -1,4 +1,4 @@
-const BASE = ''
+const BASE = import.meta.env.VITE_API_URL || 'https://api.delivra.ng'
 
 export async function api<T = unknown>(
   path: string,

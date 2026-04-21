@@ -24,16 +24,21 @@ function loadGmaps(key: string): Promise<void> {
     gmapsCallbacks.push(resolve)
     if (gmapsLoading) return
     gmapsLoading = true
-    // Use the newer Maps JS API loader with Places library
-    const s = document.createElement('script')
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`
-    s.async = true
-    s.defer = true
-    s.onload = () => {
+    
+    const cbName = 'initMap_' + Math.floor(Math.random() * 1000000)
+    // @ts-expect-error Window callback assignment
+    window[cbName] = () => {
       gmapsReady = true
       gmapsCallbacks.forEach((cb) => cb())
       gmapsCallbacks.length = 0
+      // @ts-expect-error cleanup
+      delete window[cbName]
     }
+
+    const s = document.createElement('script')
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=${cbName}`
+    s.async = true
+    s.defer = true
     s.onerror = () => {
       gmapsLoading = false
       console.error('[Places] Failed to load Google Maps script')

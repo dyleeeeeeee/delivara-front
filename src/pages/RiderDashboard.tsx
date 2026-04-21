@@ -277,8 +277,8 @@ export default function RiderDashboard() {
                       <p className="text-[10px] text-text-secondary/60 uppercase tracking-wide font-medium">Pickup</p>
                       <p className="text-sm font-medium mt-0.5">{incomingRequest.pickup_address}</p>
                       <p className="text-[11px] text-text-secondary/60 font-mono mt-0.5">
-                        {(incomingRequest as Record<string, unknown>).pickup_lat as number},{' '}
-                        {(incomingRequest as Record<string, unknown>).pickup_lng as number}
+                        {incomingRequest.pickup_lat},{' '}
+                        {incomingRequest.pickup_lng}
                       </p>
                     </div>
                   </div>
@@ -299,19 +299,18 @@ export default function RiderDashboard() {
                       <p className="text-[10px] text-text-secondary/60 uppercase tracking-wide font-medium">Dropoff</p>
                       <p className="text-sm font-medium mt-0.5">{incomingRequest.dropoff_address}</p>
                       <p className="text-[11px] text-text-secondary/60 font-mono mt-0.5">
-                        {(incomingRequest as Record<string, unknown>).dropoff_lat as number},{' '}
-                        {(incomingRequest as Record<string, unknown>).dropoff_lng as number}
+                        {incomingRequest.dropoff_lat},{' '}
+                        {incomingRequest.dropoff_lng}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Package info */}
-                {(incomingRequest as Record<string, unknown>).package_description && (
+                {incomingRequest.package_description && (
                   <div className="glass-light rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
                     <span className="text-sm">📋</span>
                     <p className="text-sm text-text-secondary">
-                      {(incomingRequest as Record<string, unknown>).package_description as string}
+                      {incomingRequest.package_description}
                     </p>
                   </div>
                 )}
@@ -320,7 +319,7 @@ export default function RiderDashboard() {
                 <div className="glass-light rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
                   <span className="text-xs text-text-secondary/60">Job ID</span>
                   <span className="text-xs font-mono text-text-secondary">
-                    {(incomingRequest as Record<string, unknown>).tracking_slug as string}
+                    {incomingRequest.tracking_slug}
                   </span>
                 </div>
               </div>

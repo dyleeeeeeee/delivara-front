@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import type { Map as MapboxMap } from 'mapbox-gl'
 import Map from '../components/Map'
 import GlassNavBar from '../components/GlassNavBar'

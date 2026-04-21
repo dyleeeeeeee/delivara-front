@@ -20,7 +20,6 @@ function isInstalled() {
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null)
-  const [platform, setPlatform] = useState<Platform>(null)
   const [visible, setVisible] = useState(false)
   const [iosSheetOpen, setIosSheetOpen] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -28,8 +27,6 @@ export default function InstallPrompt() {
   useEffect(() => {
     // Don't show if already installed or user dismissed this session
     if (isInstalled() || sessionStorage.getItem('install_dismissed')) return
-
-    setPlatform(detectPlatform())
 
     // Android/desktop: wait for browser's beforeinstallprompt
     const handler = (e: Event) => {

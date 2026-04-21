@@ -42,16 +42,7 @@ function loadGmaps(key: string): Promise<void> {
   })
 }
 
-// Hidden div required by Google for PlacesService attribution node
-let attributionDiv: HTMLDivElement | null = null
-function getAttributionDiv() {
-  if (!attributionDiv) {
-    attributionDiv = document.createElement('div')
-    attributionDiv.style.display = 'none'
-    document.body.appendChild(attributionDiv)
-  }
-  return attributionDiv
-}
+// Hidden div removed as it is unused
 
 export default function PlacesAutocomplete({
   placeholder,
@@ -113,14 +104,14 @@ export default function PlacesAutocomplete({
           input: q,
           // No 'types' filter — broader results
         },
-        (results, status) => {
+        (results: any[] | null, status: string) => {
           if (
             status === google.maps.places.PlacesServiceStatus.OK &&
             results &&
             results.length > 0
           ) {
             setPredictions(
-              results.slice(0, 5).map((r) => ({
+              results.slice(0, 5).map((r: any) => ({
                 place_id: r.place_id,
                 description: r.description,
                 main_text: r.structured_formatting?.main_text || r.description,
@@ -144,7 +135,7 @@ export default function PlacesAutocomplete({
     if (!geocoderRef.current) return
     geocoderRef.current.geocode(
       { placeId: prediction.place_id },
-      (results, status) => {
+      (results: any[] | null, status: string) => {
         if (status === 'OK' && results?.[0]) {
           const loc = results[0].geometry.location
           onChange(prediction.description, loc.lat(), loc.lng())

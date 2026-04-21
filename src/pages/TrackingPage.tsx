@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import mapboxgl from 'mapbox-gl'
+
 import Map from '../components/Map'
 import StatusChip from '../components/StatusChip'
 import RiderMarker from '../components/RiderMarker'

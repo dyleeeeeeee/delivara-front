@@ -57,7 +57,6 @@ export default function PlacesAutocomplete({
   const [error, setError] = useState('')
   const wrapperRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const serviceRef = useRef<google.maps.places.AutocompleteService | null>(null)
   const geocoderRef = useRef<google.maps.Geocoder | null>(null)
 
   useEffect(() => { setInputValue(value) }, [value])
@@ -70,7 +69,6 @@ export default function PlacesAutocomplete({
     }
     loadGmaps(key).then(() => {
       try {
-        serviceRef.current = new google.maps.places.AutocompleteService()
         geocoderRef.current = new google.maps.Geocoder()
         setReady(true)
       } catch (e) {
@@ -96,37 +94,40 @@ export default function PlacesAutocomplete({
 
   const search = useCallback((q: string) => {
     if (!q || q.length < 2) { setPredictions([]); setOpen(false); return }
-    if (!serviceRef.current) return
+    if (!ready || typeof google === 'undefined') return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      serviceRef.current!.getPlacePredictions(
-        {
-          input: q,
-          // No 'types' filter — broader results
-        },
-        (results: any[] | null, status: string) => {
-          if (
-            status === google.maps.places.PlacesServiceStatus.OK &&
-            results &&
-            results.length > 0
-          ) {
-            setPredictions(
-              results.slice(0, 5).map((r: any) => ({
-                place_id: r.place_id,
-                description: r.description,
-                main_text: r.structured_formatting?.main_text || r.description,
-                secondary_text: r.structured_formatting?.secondary_text || '',
-              }))
-            )
-            setOpen(true)
-          } else {
-            setPredictions([])
-            setOpen(false)
-          }
+    
+    debounceRef.current = setTimeout(async () => {
+      try {
+        // Use the new AutocompleteSuggestion API instead of the deprecated AutocompleteService
+        const { suggestions } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+          input: q
+        })
+        
+        if (suggestions && suggestions.length > 0) {
+          setPredictions(
+            suggestions.slice(0, 5).map((s: any) => {
+              const p = s.placePrediction
+              return {
+                place_id: p.placeId,
+                description: p.text?.text || '',
+                main_text: p.structuredFormat?.mainText?.text || p.text?.text || '',
+                secondary_text: p.structuredFormat?.secondaryText?.text || '',
+              }
+            })
+          )
+          setOpen(true)
+        } else {
+          setPredictions([])
+          setOpen(false)
         }
-      )
+      } catch (err) {
+        console.error('[Places] Autocomplete search failed:', err)
+        setPredictions([])
+        setOpen(false)
+      }
     }, 300)
-  }, [])
+  }, [ready])
 
   const select = useCallback((prediction: Prediction) => {
     setInputValue(prediction.description)

@@ -81,6 +81,9 @@ export default function RiderDashboard() {
           }
         }
       }),
+      on('JOB_REQUEST', (data) => {
+        setIncomingRequest(data as never)
+      }),
     ]
     return () => unsubs.forEach((u) => u())
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,7 +258,7 @@ export default function RiderDashboard() {
               </div>
 
               {/* Scrollable content */}
-              <div className="overflow-y-auto flex-1 px-6 pt-2">
+              <div className="overflow-y-auto flex-1 px-6 pt-2 pb-32">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-2xl bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center text-lg">
@@ -324,22 +327,22 @@ export default function RiderDashboard() {
                 </div>
               </div>
 
-              {/* Sticky CTA buttons — always visible above safe area */}
+              {/* Floating CTA buttons with gradient fade */}
               <div
-                className="flex gap-3 px-6 pt-3 pb-6 flex-shrink-0"
+                className="absolute bottom-0 left-0 right-0 px-6 pt-10 pb-6 bg-gradient-to-t from-bg-primary via-bg-primary/95 to-transparent z-50 flex gap-3"
                 style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
               >
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={declineJob}
-                  className="flex-1 py-3.5 glass-light rounded-2xl text-text-secondary text-sm font-medium"
+                  className="flex-1 py-3.5 glass-light rounded-2xl text-text-secondary text-sm font-medium border border-white/5"
                 >
                   Decline
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={acceptJob}
-                  className="flex-[2] py-3.5 bg-accent-primary rounded-2xl text-white text-sm font-bold glow-primary"
+                  className="flex-[2] py-4 bg-accent-primary rounded-2xl text-white text-sm font-bold glow-primary shadow-2xl shadow-accent-primary/20"
                 >
                   Accept Job →
                 </motion.button>

@@ -6,6 +6,8 @@ self.addEventListener('install', (e) => {
 })
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('/api/') || e.request.url.includes('/ws')) return
+  const url = new URL(e.request.url)
+  if (url.origin !== location.origin) return
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws')) return
   e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)))
 })

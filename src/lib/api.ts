@@ -15,7 +15,8 @@ export async function api<T = unknown>(
   }
 
   const res = await fetch(`${BASE}${path}`, { ...options, headers })
-  const data = await res.json()
+  const text = await res.text()
+  const data = text ? JSON.parse(text) : {}
 
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data as T

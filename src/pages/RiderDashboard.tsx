@@ -119,8 +119,12 @@ export default function RiderDashboard() {
   }
 
   const acceptJob = () => {
+    toast.show('Accepting job...', 'info')
     const { incomingRequest: req } = useJobsStore.getState()
-    if (!req) return
+    if (!req) {
+      toast.show('Error: No request data found', 'error')
+      return
+    }
     send('ACCEPT_JOB', { job_id: req.id })
     // Upgrade the job_id on the existing watch — no GPS restart, no gap in stream
     upgradeJobId(req.id)

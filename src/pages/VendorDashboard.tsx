@@ -31,7 +31,8 @@ export default function VendorDashboard() {
   useEffect(() => {
     const unsubs = [
       on('JOB_CREATED', (data) => {
-        addJob(data as never)
+        const normalized = { ...data, id: (data as any).job_id ?? (data as any).id }
+        addJob(normalized as never)
       }),
 
       on('JOB_ACCEPTED', (data) => {

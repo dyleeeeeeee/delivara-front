@@ -75,10 +75,26 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
       markerRef.current = marker
 
+      const reverseGeocode = (lat: number, lng: number, setAddress: (addr: string) => void) => {
+        const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+        if (typeof window.google === 'undefined' || !window.google.maps) {
+          setAddress(fallback)
+          return
+        }
+        const geocoder = new window.google.maps.Geocoder()
+        geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+          if (status === 'OK' && results?.[0]) {
+            setAddress(results[0].formatted_address)
+          } else {
+            setAddress(fallback)
+          }
+        })
+      }
+
       const updateDropoff = (lngLat: mapboxgl.LngLat) => {
         setDropoffLat(lngLat.lat.toFixed(6))
         setDropoffLng(lngLat.lng.toFixed(6))
-        setDropoffAddress(`${lngLat.lat.toFixed(5)}, ${lngLat.lng.toFixed(5)}`)
+        reverseGeocode(lngLat.lat, lngLat.lng, setDropoffAddress)
       }
 
       updateDropoff(marker.getLngLat())
@@ -106,19 +122,34 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
   }
 
   const useMyLocation = () => {
+    const handleLocation = (lat: number, lng: number) => {
+      setPickupLat(lat.toFixed(6))
+      setPickupLng(lng.toFixed(6))
+      
+      const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+      if (typeof window.google === 'undefined' || !window.google.maps) {
+        setPickupAddress(fallback)
+        return
+      }
+      const geocoder = new window.google.maps.Geocoder()
+      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+        if (status === 'OK' && results?.[0]) {
+          setPickupAddress(results[0].formatted_address)
+        } else {
+          setPickupAddress(fallback)
+        }
+      })
+    }
+
     if (currentLat && currentLng) {
-      setPickupLat(currentLat.toFixed(6))
-      setPickupLng(currentLng.toFixed(6))
-      setPickupAddress(`${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`)
+      handleLocation(currentLat, currentLng)
       return
     }
     if (!navigator.geolocation) { toast.show('Geolocation not supported', 'error'); return }
     setLocLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setPickupLat(pos.coords.latitude.toFixed(6))
-        setPickupLng(pos.coords.longitude.toFixed(6))
-        setPickupAddress(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`)
+        handleLocation(pos.coords.latitude, pos.coords.longitude)
         setLocLoading(false)
       },
       () => { toast.show('Could not get location', 'error'); setLocLoading(false) },

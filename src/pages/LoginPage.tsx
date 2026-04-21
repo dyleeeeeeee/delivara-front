@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../stores/auth'
@@ -7,7 +7,13 @@ import Map from '../components/Map'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { requestOtp, verifyOtp, loading, error, clearError } = useAuthStore()
+  const { requestOtp, verifyOtp, loading, error, clearError, token, user } = useAuthStore()
+
+  useEffect(() => {
+    if (token && user) {
+      navigate('/')
+    }
+  }, [token, user, navigate])
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone')
   const [phone, setPhone] = useState('')

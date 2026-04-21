@@ -15,6 +15,13 @@ export async function api<T = unknown>(
   }
 
   const res = await fetch(`${BASE}${path}`, { ...options, headers })
+
+  if (res.status === 401) {
+    localStorage.removeItem('delivara_token')
+    window.location.href = '/login'
+    throw new Error('Session expired. Please log in again.')
+  }
+
   const text = await res.text()
   const data = text ? JSON.parse(text) : {}
 

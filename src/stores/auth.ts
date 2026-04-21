@@ -3,7 +3,8 @@ import { api } from '../lib/api'
 
 interface User {
   id: string
-  phone: string
+  phone?: string
+  email?: string
   role: 'vendor' | 'rider'
   name?: string
   business_name?: string
@@ -14,8 +15,8 @@ interface AuthState {
   user: User | null
   loading: boolean
   error: string | null
-  requestOtp: (phone: string, role: string) => Promise<string>
-  verifyOtp: (phone: string, code: string, role: string, referralCode?: string) => Promise<void>
+  requestOtp: (contact: string, role: string, method?: 'email' | 'phone') => Promise<string>
+  verifyOtp: (contact: string, code: string, role: string, referralCode?: string, method?: 'email' | 'phone') => Promise<void>
   loadUser: () => Promise<void>
   logout: () => void
   clearError: () => void
@@ -29,24 +30,30 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   clearError: () => set({ error: null }),
 
-  requestOtp: async (phone, role) => {
+  requestOtp: async (contact, role, method = 'phone') => {
     set({ error: null })
+    const body = method === 'email' 
+      ? { email: contact, role }
+      : { phone: contact, role }
     const res = await api<{ dev_code: string }>('/api/auth/request-otp', {
       method: 'POST',
-      body: JSON.stringify({ phone, role }),
+      body: JSON.stringify(body),
     })
     return res.dev_code
   },
 
-  verifyOtp: async (phone, code, role, referralCode) => {
+  verifyOtp: async (contact, code, role, referralCode, method = 'phone') => {
     set({ loading: true, error: null })
     try {
+      const body = method === 'email'
+        ? { email: contact, code, role, referral_code: referralCode }
+        : { phone: contact, code, role, referral_code: referralCode }
       const res = await api<{ token: string; user: User }>('/api/auth/verify-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone, code, role, referral_code: referralCode }),
+        body: JSON.stringify(body),
       })
-      localStorage.setItem('delivara_token', res.token)
-      localStorage.setItem('delivara_user', JSON.stringify(res.user))
+      localStorage.setItem('delivra_token', res.token)
+      localStorage.setItem('delivra_user', JSON.stringify(res.user))
       // Set state synchronously before caller navigates
       set({ token: res.token, user: res.user, loading: false })
     } catch (err: unknown) {

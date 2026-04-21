@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/auth'
-import LoginPage from './pages/LoginPage'
+import Onboarding from './components/Onboarding'
 import VendorDashboard from './pages/VendorDashboard'
 import RiderDashboard from './pages/RiderDashboard'
 import TrackingPage from './pages/TrackingPage'
@@ -27,7 +27,7 @@ export default function App() {
   return (
     <>
       <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<Onboarding />} />
       <Route path="/track/:slug" element={<TrackingPage />} />
       <Route
         path="/"

@@ -87,9 +87,6 @@ export default function RiderDashboard() {
           }
         }
       }),
-      on('JOB_REQUEST', (data) => {
-        setIncomingRequest(data as never)
-      }),
     ]
     return () => unsubs.forEach((u) => u())
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -128,6 +125,10 @@ export default function RiderDashboard() {
     send('ACCEPT_JOB', { job_id: req.id })
     // Upgrade the job_id on the existing watch — no GPS restart, no gap in stream
     upgradeJobId(req.id)
+    // Optimistically close the modal and show active job UI — JOB_ASSIGNED will
+    // fill in full details. Prevents the "old UI" flash while awaiting server.
+    setActiveJob({ ...req, status: 'ASSIGNED' } as never)
+    setIncomingRequest(null)
   }
 
   const declineJob = () => {
@@ -242,12 +243,13 @@ export default function RiderDashboard() {
       <AnimatePresence>
         {incomingRequest && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop — tap outside to dismiss */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-30"
+              onClick={declineJob}
+              className="fixed inset-0 bg-black/60 z-30 cursor-pointer"
             />
 
             <motion.div

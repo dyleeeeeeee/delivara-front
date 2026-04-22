@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../stores/auth'
 import OtpInput from './OtpInput'
 import Map from './Map'
 
-type Step = 'welcome' | 'method' | 'email' | 'phone' | 'otp' | 'role' | 'complete'
+type Step = 'welcome' | 'method' | 'role' | 'email' | 'phone' | 'otp' | 'complete'
 
 export default function Onboarding() {
+  const navigate = useNavigate()
   const { requestOtp, verifyOtp, loading, error, clearError, token, user } = useAuthStore()
 
   const [step, setStep] = useState<Step>('welcome')
@@ -18,28 +20,59 @@ export default function Onboarding() {
   const [otp, setOtp] = useState('')
   const [devCode, setDevCode] = useState('')
   const [localError, setLocalError] = useState('')
+  const [sending, setSending] = useState(false)
+  const [resendAt, setResendAt] = useState(0)
+  const [now, setNow] = useState(Date.now())
 
   const showError = localError || error || ''
 
+  // Redirect already-authenticated users to home
+  useEffect(() => {
+    if (token && user && step !== 'complete') {
+      navigate('/', { replace: true })
+    }
+  }, [token, user, step, navigate])
+
+  // Cooldown ticker for Resend OTP button
+  useEffect(() => {
+    if (resendAt <= Date.now()) return
+    const id = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(id)
+  }, [resendAt])
+
   const handleRequestOtp = async (contact: string) => {
+    if (sending) return
     setLocalError('')
     clearError()
+    setSending(true)
     try {
       const code = await requestOtp(contact, role, method)
       setDevCode(code)
+      setResendAt(Date.now() + 30_000) // 30s cooldown
       setStep('otp')
     } catch (err: unknown) {
       setLocalError(err instanceof Error ? err.message : 'Failed to send OTP')
+    } finally {
+      setSending(false)
     }
   }
 
-  const handleVerify = async () => {
-    if (otp.length < 6 || loading) return
+  const handleResend = async () => {
+    const contact = method === 'email' ? email : phone
+    if (!contact) return
+    if (resendAt > Date.now()) return
+    setOtp('')
+    await handleRequestOtp(contact)
+  }
+
+  const handleVerify = async (code?: string) => {
+    const codeToVerify = code ?? otp
+    if (codeToVerify.length < 6 || loading) return
     setLocalError('')
     clearError()
     try {
       const contact = method === 'email' ? email : phone
-      await verifyOtp(contact, otp, role, referralCode || undefined, method)
+      await verifyOtp(contact, codeToVerify, role, referralCode || undefined, method)
       setStep('complete')
     } catch (err: unknown) {
       setLocalError(err instanceof Error ? err.message : 'Invalid or expired code')
@@ -47,23 +80,30 @@ export default function Onboarding() {
     }
   }
 
-  const handleComplete = () => {
-    if (token && user) {
-      window.location.href = '/'
+  // Auto-submit OTP once all 6 digits are entered
+  useEffect(() => {
+    if (step === 'otp' && otp.length === 6 && !loading) {
+      handleVerify(otp)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, step])
+
+  const handleComplete = () => {
+    navigate('/', { replace: true })
   }
 
-  const steps = [
+  // Progress bar reflects only the screens this user will see
+  const activeContactStep: Step = method
+  const flowSteps: { id: Step; title: string }[] = [
     { id: 'welcome', title: 'Welcome' },
-    { id: 'method', title: 'Choose Method' },
-    { id: 'role', title: 'Your Role' },
-    { id: 'email', title: 'Email' },
-    { id: 'phone', title: 'Phone' },
+    { id: 'method', title: 'Method' },
+    { id: 'role', title: 'Role' },
+    { id: activeContactStep, title: method === 'email' ? 'Email' : 'Phone' },
     { id: 'otp', title: 'Verify' },
-    { id: 'complete', title: 'Welcome!' },
+    { id: 'complete', title: 'Done' },
   ]
-
-  const currentStepIndex = steps.findIndex((s) => s.id === step)
+  const currentStepIndex = flowSteps.findIndex((s) => s.id === step)
+  const resendSecondsLeft = Math.max(0, Math.ceil((resendAt - now) / 1000))
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -78,8 +118,8 @@ export default function Onboarding() {
       {/* Progress indicator */}
       <div className="absolute top-8 left-0 right-0 z-20 px-6">
         <div className="max-w-sm mx-auto">
-          <div className="flex items-center justify-between gap-2">
-            {steps.map((s, i) => (
+          <div className="flex items-center justify-between gap-2" role="progressbar" aria-valuemin={0} aria-valuemax={flowSteps.length} aria-valuenow={currentStepIndex + 1}>
+            {flowSteps.map((s, i) => (
               <div
                 key={s.id}
                 className={`flex-1 h-1 rounded-full transition-all ${
@@ -128,6 +168,7 @@ export default function Onboarding() {
                 onNext={() => handleRequestOtp(email)}
                 onBack={() => setStep('role')}
                 error={showError}
+                sending={sending}
               />
             )}
 
@@ -139,6 +180,7 @@ export default function Onboarding() {
                 onNext={() => handleRequestOtp(phone)}
                 onBack={() => setStep('role')}
                 error={showError}
+                sending={sending}
               />
             )}
 
@@ -150,8 +192,11 @@ export default function Onboarding() {
                 devCode={devCode}
                 otp={otp}
                 onChange={setOtp}
-                onVerify={handleVerify}
+                onVerify={() => handleVerify()}
                 onBack={() => { setStep(method); setOtp(''); setLocalError(''); clearError() }}
+                onResend={handleResend}
+                resendSecondsLeft={resendSecondsLeft}
+                sending={sending}
                 loading={loading}
                 error={showError}
               />
@@ -258,13 +303,24 @@ function MethodCard({ icon, title, description, onClick }: { icon: string; title
   )
 }
 
-function EmailInput({ value, onChange, onNext, onBack, error }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onNext: () => void; onBack: () => void; error: string }) {
+function Spinner() {
+  return (
+    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  )
+}
+
+function EmailInput({ value, onChange, onNext, onBack, error, sending }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onNext: () => void; onBack: () => void; error: string; sending: boolean }) {
   const [isValid, setIsValid] = useState(false)
 
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     setIsValid(emailRegex.test(value))
   }, [value])
+
+  const canContinue = isValid && !sending
 
   return (
     <motion.div
@@ -279,30 +335,37 @@ function EmailInput({ value, onChange, onNext, onBack, error }: { value: string;
       </div>
 
       <div className="space-y-3">
+        <label className="sr-only" htmlFor="onboarding-email">Email address</label>
         <input
+          id="onboarding-email"
           type="email"
+          autoComplete="email"
+          inputMode="email"
+          autoFocus
           placeholder="you@example.com"
           value={value}
           onChange={onChange}
-          onKeyDown={(e) => e.key === 'Enter' && isValid && onNext()}
+          onKeyDown={(e) => e.key === 'Enter' && canContinue && onNext()}
+          aria-invalid={!!value && !isValid}
           className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-accent-primary/50 transition-all"
         />
 
         {value && (
           <div className="flex items-center gap-2 text-xs">
             {isValid ? (
-              <span className="text-green-400">✓ Valid email</span>
+              <span className="text-green-400">✓ Looks good</span>
             ) : (
-              <span className="text-red-400">✗ Invalid email format</span>
+              <span className="text-red-400">Enter a valid email</span>
             )}
           </div>
         )}
 
-        {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+        {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
       </div>
 
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={onBack}
           className="flex-1 py-3 glass-light rounded-xl text-text-secondary text-sm"
         >
@@ -311,24 +374,26 @@ function EmailInput({ value, onChange, onNext, onBack, error }: { value: string;
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onNext}
-          disabled={!isValid}
-          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary"
+          disabled={!canContinue}
+          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
         >
-          Continue
+          {sending ? (<><Spinner /> Sending…</>) : 'Continue'}
         </motion.button>
       </div>
     </motion.div>
   )
 }
 
-function PhoneInput({ value, onChange, onNext, onBack, error }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onNext: () => void; onBack: () => void; error: string }) {
+function PhoneInput({ value, onChange, onNext, onBack, error, sending }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onNext: () => void; onBack: () => void; error: string; sending: boolean }) {
   const [isValid, setIsValid] = useState(false)
 
   useEffect(() => {
-    // Basic phone validation (at least 10 digits)
-    const phoneRegex = /^[\d\s\+\-\(\)]{10,}$/
-    setIsValid(phoneRegex.test(value.replace(/\s/g, '')))
+    // At least 10 digits; symbols allowed but ignored
+    const digits = value.replace(/\D/g, '')
+    setIsValid(digits.length >= 10)
   }, [value])
+
+  const canContinue = isValid && !sending
 
   return (
     <motion.div
@@ -343,30 +408,41 @@ function PhoneInput({ value, onChange, onNext, onBack, error }: { value: string;
       </div>
 
       <div className="space-y-3">
+        <label className="sr-only" htmlFor="onboarding-phone">Phone number</label>
         <input
+          id="onboarding-phone"
           type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          autoFocus
           placeholder="+234 800 000 0000"
           value={value}
           onChange={onChange}
-          onKeyDown={(e) => e.key === 'Enter' && isValid && onNext()}
+          onKeyDown={(e) => e.key === 'Enter' && canContinue && onNext()}
+          aria-invalid={!!value && !isValid}
           className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-accent-primary/50 transition-all"
         />
+
+        <p className="text-[11px] text-text-secondary/60">
+          Nigerian number? Type it as <span className="font-mono">0801…</span> — we'll add <span className="font-mono">+234</span> for you.
+        </p>
 
         {value && (
           <div className="flex items-center gap-2 text-xs">
             {isValid ? (
-              <span className="text-green-400">✓ Valid phone</span>
+              <span className="text-green-400">✓ Looks good</span>
             ) : (
-              <span className="text-red-400">✗ Enter at least 10 digits</span>
+              <span className="text-red-400">Enter at least 10 digits</span>
             )}
           </div>
         )}
 
-        {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+        {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
       </div>
 
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={onBack}
           className="flex-1 py-3 glass-light rounded-xl text-text-secondary text-sm"
         >
@@ -375,17 +451,19 @@ function PhoneInput({ value, onChange, onNext, onBack, error }: { value: string;
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onNext}
-          disabled={!isValid}
-          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary"
+          disabled={!canContinue}
+          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
         >
-          Continue
+          {sending ? (<><Spinner /> Sending…</>) : 'Continue'}
         </motion.button>
       </div>
     </motion.div>
   )
 }
 
-function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, onBack, loading, error }: { contact: string; method: 'email' | 'phone'; devCode: string; otp: string; onChange: (v: string) => void; onVerify: () => void; onBack: () => void; loading: boolean; error: string }) {
+function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, onBack, onResend, resendSecondsLeft, sending, loading, error }: { contact: string; method: 'email' | 'phone'; devCode: string; otp: string; onChange: (v: string) => void; onVerify: () => void; onBack: () => void; onResend: () => void; resendSecondsLeft: number; sending: boolean; loading: boolean; error: string }) {
+  const showDev = devCode && import.meta.env.DEV
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -16 }}
@@ -400,7 +478,7 @@ function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, on
         </p>
       </div>
 
-      {devCode && (
+      {showDev && (
         <div className="text-center bg-accent-primary/10 border border-accent-primary/20 rounded-xl py-3 px-4">
           <p className="text-[10px] text-text-secondary mb-1">Dev OTP</p>
           <p className="text-accent-primary font-bold font-mono tracking-[0.3em] text-xl">{devCode}</p>
@@ -409,31 +487,39 @@ function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, on
 
       <OtpInput value={otp} onChange={onChange} />
 
-      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+      {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
 
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onVerify}
         disabled={otp.length < 6 || loading}
-        className="w-full py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary"
+        className="w-full py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
       >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-            </svg>
-            Verifying...
-          </span>
-        ) : 'Verify'}
+        {loading ? (<><Spinner /> Verifying…</>) : 'Verify'}
       </motion.button>
 
-      <button
-        onClick={onBack}
-        className="w-full text-center text-text-secondary text-xs"
-      >
-        ← Change {method}
-      </button>
+      <div className="flex items-center justify-between text-xs">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-text-secondary hover:text-white transition"
+        >
+          ← Change {method}
+        </button>
+
+        <button
+          type="button"
+          onClick={onResend}
+          disabled={resendSecondsLeft > 0 || sending}
+          className="text-text-secondary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          {sending
+            ? 'Sending…'
+            : resendSecondsLeft > 0
+              ? `Resend in ${resendSecondsLeft}s`
+              : 'Resend code'}
+        </button>
+      </div>
     </motion.div>
   )
 }
@@ -481,7 +567,7 @@ function RoleSelection({ role, onChange, onNext, referralCode, onReferralChange 
         onClick={onNext}
         className="w-full py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm glow-primary"
       >
-        Complete Setup →
+        Continue →
       </motion.button>
     </motion.div>
   )

@@ -25,7 +25,7 @@ export default function Onboarding() {
     setLocalError('')
     clearError()
     try {
-      const code = await requestOtp(contact, role)
+      const code = await requestOtp(contact, role, method)
       setDevCode(code)
       setStep('otp')
     } catch (err: unknown) {
@@ -39,7 +39,7 @@ export default function Onboarding() {
     clearError()
     try {
       const contact = method === 'email' ? email : phone
-      await verifyOtp(contact, otp, role, referralCode || undefined)
+      await verifyOtp(contact, otp, role, referralCode || undefined, method)
       setStep('complete')
     } catch (err: unknown) {
       setLocalError(err instanceof Error ? err.message : 'Invalid or expired code')
@@ -56,10 +56,10 @@ export default function Onboarding() {
   const steps = [
     { id: 'welcome', title: 'Welcome' },
     { id: 'method', title: 'Choose Method' },
+    { id: 'role', title: 'Your Role' },
     { id: 'email', title: 'Email' },
     { id: 'phone', title: 'Phone' },
     { id: 'otp', title: 'Verify' },
-    { id: 'role', title: 'Your Role' },
     { id: 'complete', title: 'Welcome!' },
   ]
 
@@ -106,7 +106,18 @@ export default function Onboarding() {
             )}
 
             {step === 'method' && (
-              <MethodSelection key="method" onSelect={setMethod} onNext={() => setStep(method)} />
+              <MethodSelection key="method" onSelect={setMethod} onNext={() => setStep('role')} />
+            )}
+
+            {step === 'role' && (
+              <RoleSelection
+                key="role"
+                role={role}
+                onChange={setRole}
+                onNext={() => setStep(method)}
+                referralCode={referralCode}
+                onReferralChange={setReferralCode}
+              />
             )}
 
             {step === 'email' && (
@@ -115,7 +126,7 @@ export default function Onboarding() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setLocalError('') }}
                 onNext={() => handleRequestOtp(email)}
-                onBack={() => setStep('method')}
+                onBack={() => setStep('role')}
                 error={showError}
               />
             )}
@@ -126,7 +137,7 @@ export default function Onboarding() {
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setLocalError('') }}
                 onNext={() => handleRequestOtp(phone)}
-                onBack={() => setStep('method')}
+                onBack={() => setStep('role')}
                 error={showError}
               />
             )}
@@ -143,17 +154,6 @@ export default function Onboarding() {
                 onBack={() => { setStep(method); setOtp(''); setLocalError(''); clearError() }}
                 loading={loading}
                 error={showError}
-              />
-            )}
-
-            {step === 'role' && (
-              <RoleSelection
-                key="role"
-                role={role}
-                onChange={setRole}
-                onNext={() => setStep('complete')}
-                referralCode={referralCode}
-                onReferralChange={setReferralCode}
               />
             )}
 

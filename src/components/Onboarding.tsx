@@ -26,9 +26,10 @@ export default function Onboarding() {
 
   const showError = localError || error || ''
 
-  // Redirect already-authenticated users to home
+  // Redirect already-authenticated users to home (but not during OTP verification)
   useEffect(() => {
-    if (token && user && step !== 'complete') {
+    const preOtpSteps: Step[] = ['welcome', 'method', 'role', 'email', 'phone']
+    if (token && user && preOtpSteps.includes(step)) {
       navigate('/', { replace: true })
     }
   }, [token, user, step, navigate])

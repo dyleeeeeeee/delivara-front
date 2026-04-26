@@ -462,8 +462,6 @@ function PhoneInput({ value, onChange, onNext, onBack, error, sending }: { value
 }
 
 function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, onBack, onResend, resendSecondsLeft, sending, loading, error }: { contact: string; method: 'email' | 'phone'; devCode: string; otp: string; onChange: (v: string) => void; onVerify: () => void; onBack: () => void; onResend: () => void; resendSecondsLeft: number; sending: boolean; loading: boolean; error: string }) {
-  const showDev = devCode && import.meta.env.DEV
-
   return (
     <motion.div
       initial={{ opacity: 0, x: -16 }}
@@ -478,9 +476,9 @@ function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, on
         </p>
       </div>
 
-      {showDev && (
+      {devCode && (
         <div className="text-center bg-accent-primary/10 border border-accent-primary/20 rounded-xl py-3 px-4">
-          <p className="text-[10px] text-text-secondary mb-1">Dev OTP</p>
+          <p className="text-[10px] text-text-secondary mb-1">Your Code</p>
           <p className="text-accent-primary font-bold font-mono tracking-[0.3em] text-xl">{devCode}</p>
         </div>
       )}

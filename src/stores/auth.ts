@@ -52,8 +52,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         method: 'POST',
         body: JSON.stringify(body),
       })
-      localStorage.setItem('delivra_token', res.token)
-      localStorage.setItem('delivra_user', JSON.stringify(res.user))
+      localStorage.setItem('delivara_token', res.token)
+      localStorage.setItem('delivara_user', JSON.stringify(res.user))
       // Set state synchronously before caller navigates
       set({ token: res.token, user: res.user, loading: false })
     } catch (err: unknown) {

@@ -1,0 +1,30 @@
+/assets/*
+  Content-Type: text/css;charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.js
+  Content-Type: application/javascript;charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.svg
+  Content-Type: image/svg+xml
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=31536000, immutable
+
+/sw.js
+  Content-Type: application/javascript
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*
+  X-Content-Type-Options: nosniff

@@ -28,6 +28,26 @@ export default function RiderDashboard() {
     requestPermission()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Persist online state across page refreshes
+  useEffect(() => {
+    const savedOnline = localStorage.getItem('rider_online') === 'true'
+    setIsOnline(savedOnline)
+  }, [])
+
+  // Auto-send RIDER_ONLINE if previously online and WebSocket connects
+  useEffect(() => {
+    const { connected } = useWSStore.getState()
+    if (connected && isOnline) {
+      const { currentLat: lat, currentLng: lng } = useLocationStore.getState()
+      send('RIDER_ONLINE', {
+        lat: lat ?? 6.5244,
+        lng: lng ?? 3.3792,
+      })
+      // Start idle location watch if previously online
+      startWatching('idle')
+    }
+  }, [isOnline]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     connect()
     return () => disconnect()
@@ -98,6 +118,7 @@ export default function RiderDashboard() {
       return
     }
     setIsOnline(true)
+    localStorage.setItem('rider_online', 'true')
     // Start idle location watch immediately — keeps currentLat/currentLng fresh
     // Uses 'idle' sentinel so location updates aren't sent to backend until job assigned
     startWatching('idle')
@@ -111,6 +132,7 @@ export default function RiderDashboard() {
 
   const goOffline = () => {
     setIsOnline(false)
+    localStorage.setItem('rider_online', 'false')
     stopWatching()
     send('RIDER_OFFLINE', {})
   }

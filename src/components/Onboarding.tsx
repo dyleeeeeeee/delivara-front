@@ -110,7 +110,7 @@ export default function Onboarding() {
     <div className="relative h-full w-full overflow-hidden">
       {/* Map background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <Map center={[3.3792, 6.5244]} zoom={12} />
+        <Map zoom={12} />
       </div>
 
       {/* Dark overlay */}

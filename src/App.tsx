@@ -6,6 +6,7 @@ import Onboarding from './components/Onboarding'
 import VendorDashboard from './pages/VendorDashboard'
 import RiderDashboard from './pages/RiderDashboard'
 import TrackingPage from './pages/TrackingPage'
+import AdminPage from './pages/AdminPage'
 import HistoryPage from './pages/HistoryPage'
 import RatingsPage from './pages/RatingsPage'
 import SettingsPage from './pages/SettingsPage'
@@ -37,6 +38,7 @@ export default function App() {
       <Routes>
       <Route path="/login" element={<Onboarding />} />
       <Route path="/track/:slug" element={<TrackingPage />} />
+      <Route path="/admin" element={<AdminPage />} />
       <Route
         path="/"
         element={

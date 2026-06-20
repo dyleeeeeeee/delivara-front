@@ -6,18 +6,42 @@ import Toast, { useToast } from '../components/Toast'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../lib/api'
 
+interface Referral {
+  code: string
+  count: number
+  share_text: string
+}
+
 export default function SettingsPage() {
   const { user, logout, loadUser } = useAuthStore()
   const toast = useToast()
   const [name, setName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [referral, setReferral] = useState<Referral | null>(null)
 
   useEffect(() => {
     if (!user) return
     setName(user.name || '')
     setBusinessName(user.business_name || '')
+    api<Referral>('/api/me/referral').then(setReferral).catch(() => {})
   }, [user])
+
+  const shareReferral = () => {
+    if (!referral) return
+    const text = encodeURIComponent(referral.share_text)
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  const copyCode = async () => {
+    if (!referral) return
+    try {
+      await navigator.clipboard.writeText(referral.code)
+      toast.show('Code copied', 'success')
+    } catch {
+      toast.show('Could not copy', 'error')
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -86,6 +110,37 @@ export default function SettingsPage() {
             {saving ? 'Saving...' : 'Save Changes'}
           </motion.button>
         </div>
+
+        {/* Referral / invite */}
+        {referral && (
+          <div className="glass rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-text-secondary">Invite & earn</h2>
+              <span className="text-xs text-text-secondary/60">
+                {referral.count} joined
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary/70">
+              Share your code — friends use it when signing up.
+            </p>
+            <button
+              onClick={copyCode}
+              className="w-full flex items-center justify-between glass-light rounded-xl px-4 py-3"
+            >
+              <span className="text-lg font-bold tracking-[0.2em] text-accent-primary">
+                {referral.code}
+              </span>
+              <span className="text-xs text-text-secondary/60">Tap to copy</span>
+            </button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={shareReferral}
+              className="w-full py-3 bg-green-500/15 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium"
+            >
+              Share on WhatsApp
+            </motion.button>
+          </div>
+        )}
 
         <div className="glass rounded-xl p-4">
           <h2 className="text-sm font-medium text-text-secondary mb-3">Account</h2>

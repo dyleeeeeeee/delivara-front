@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { MAPBOX_TOKEN, MAP_STYLE } from '../lib/mapStyle'
+import { DEFAULT_MAP_CENTER } from '../lib/geo'
 
 interface MapProps {
   onMapReady?: (map: mapboxgl.Map) => void
@@ -24,7 +25,7 @@ export default function Map({ onMapReady, center, zoom = 13 }: MapProps) {
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: center || [3.3792, 6.5244],
+      center: center || DEFAULT_MAP_CENTER,
       zoom,
       attributionControl: false,
       logoPosition: 'bottom-left',

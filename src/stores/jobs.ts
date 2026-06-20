@@ -14,6 +14,7 @@ interface Job {
   dropoff_lng: number
   tracking_slug: string
   package_description?: string
+  fee?: number
 }
 
 interface JobsState {

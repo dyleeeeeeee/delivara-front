@@ -8,6 +8,7 @@ interface JobCardProps {
     dropoff_address: string
     tracking_slug: string
     package_description?: string
+    fee?: number
   }
   onClick?: () => void
 }
@@ -20,9 +21,14 @@ export default function JobCard({ job, onClick }: JobCardProps) {
     >
       <div className="flex items-center justify-between mb-3">
         <StatusChip status={job.status} />
-        <span className="text-[10px] text-text-secondary font-mono">
-          {job.tracking_slug}
-        </span>
+        <div className="flex items-center gap-2">
+          {typeof job.fee === 'number' && (
+            <span className="text-xs font-bold text-accent-secondary">₦{job.fee.toLocaleString()}</span>
+          )}
+          <span className="text-[10px] text-text-secondary font-mono">
+            {job.tracking_slug}
+          </span>
+        </div>
       </div>
       <div className="space-y-1.5">
         <div className="flex items-start gap-2">

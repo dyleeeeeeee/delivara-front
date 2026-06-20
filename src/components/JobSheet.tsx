@@ -5,6 +5,7 @@ import { useWSStore } from '../stores/ws'
 import { useLocationStore } from '../stores/location'
 import { useToast } from './Toast'
 import { MAPBOX_TOKEN, MAP_STYLE } from '../lib/mapStyle'
+import { DEFAULT_MAP_CENTER } from '../lib/geo'
 import PlacesAutocomplete from './PlacesAutocomplete'
 
 interface JobSheetProps {
@@ -50,7 +51,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
       const center: [number, number] = currentLat && currentLng
         ? [currentLng, currentLat]
-        : [3.3792, 6.5244]
+        : DEFAULT_MAP_CENTER
 
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,

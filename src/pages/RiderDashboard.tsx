@@ -11,6 +11,7 @@ import { useWSStore } from '../stores/ws'
 import { useJobsStore } from '../stores/jobs'
 import { useLocationStore } from '../stores/location'
 import { api } from '../lib/api'
+import { PH_LAT, PH_LNG } from '../lib/geo'
 
 export default function RiderDashboard() {
   const [, setMapInstance] = useState<unknown>(null)
@@ -40,8 +41,8 @@ export default function RiderDashboard() {
     if (connected && isOnline) {
       const { currentLat: lat, currentLng: lng } = useLocationStore.getState()
       send('RIDER_ONLINE', {
-        lat: lat ?? 6.5244,
-        lng: lng ?? 3.3792,
+        lat: lat ?? PH_LAT,
+        lng: lng ?? PH_LNG,
       })
       // Start idle location watch if previously online
       startWatching('idle')
@@ -124,8 +125,8 @@ export default function RiderDashboard() {
     startWatching('idle')
     const { currentLat: lat, currentLng: lng } = useLocationStore.getState()
     send('RIDER_ONLINE', {
-      lat: lat ?? 6.5244,
-      lng: lng ?? 3.3792,
+      lat: lat ?? PH_LAT,
+      lng: lng ?? PH_LNG,
     })
     toast.show('You are now online', 'success')
   }
@@ -321,6 +322,21 @@ export default function RiderDashboard() {
                     <p className="text-xs text-text-secondary">Tap Accept to claim this job</p>
                   </div>
                 </div>
+
+                {/* Suggested dispatch fee — what the rider earns */}
+                {typeof incomingRequest.fee === 'number' && (
+                  <div className="rounded-2xl p-4 mb-4 bg-green-500/10 border border-green-500/30 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-green-400/70 uppercase tracking-wide font-medium">You earn</p>
+                      <p className="text-2xl font-bold text-green-400 mt-0.5">
+                        ₦{incomingRequest.fee.toLocaleString()}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-text-secondary/70 text-right max-w-[45%]">
+                      Suggested by Delivra · paid by recipient on delivery
+                    </p>
+                  </div>
+                )}
 
                 {/* Route */}
                 <div className="glass-light rounded-2xl p-4 mb-4 space-y-3">

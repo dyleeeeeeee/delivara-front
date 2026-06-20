@@ -16,6 +16,7 @@ interface TrackingJob {
   dropoff_lat: number
   dropoff_lng: number
   tracking_slug: string
+  fee?: number
 }
 
 export default function TrackingPage() {
@@ -137,16 +138,37 @@ export default function TrackingPage() {
           </div>
           <p className="text-xs text-text-secondary">{job.pickup_address}</p>
           <p className="text-xs text-text-secondary mt-1">→ {job.dropoff_address}</p>
+
+          {typeof job.fee === 'number' && job.status !== 'COMPLETED' && (
+            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+              <span className="text-xs text-text-secondary/70">Dispatch fee</span>
+              <span className="text-sm font-bold text-accent-secondary">
+                ₦{job.fee.toLocaleString()}
+                <span className="ml-1 text-[10px] font-normal text-text-secondary/60">pay rider</span>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {job.status === 'COMPLETED' && (
-        <div className="absolute bottom-8 left-4 right-4 z-10">
+        <div className="absolute bottom-24 left-4 right-4 z-10">
           <div className="glass rounded-xl p-4 text-center">
             <p className="text-sm font-medium text-green-400">✓ Delivery Complete</p>
           </div>
         </div>
       )}
+
+      {/* Growth loop — every tracking link is a chance to win a new vendor */}
+      <div className="absolute bottom-6 left-4 right-4 z-10">
+        <a
+          href="https://delivra.ng/login"
+          className="block glass rounded-xl px-4 py-3 text-center hover:bg-white/5 transition-colors"
+        >
+          <p className="text-xs text-text-secondary/70">Powered by <span className="text-accent-primary font-semibold">Delivra</span></p>
+          <p className="text-sm font-medium text-text-primary mt-0.5">Send your own delivery →</p>
+        </a>
+      </div>
     </div>
   )
 }

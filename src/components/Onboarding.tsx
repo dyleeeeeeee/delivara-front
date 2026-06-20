@@ -269,8 +269,8 @@ function MethodSelection({ onSelect, onNext }: { onSelect: (m: 'email' | 'phone'
       className="space-y-6"
     >
       <div className="text-center">
-        <h2 className="text-xl font-bold text-white">How would you like to sign up?</h2>
-        <p className="text-text-secondary mt-2 text-sm">Choose your preferred verification method</p>
+        <h2 className="text-xl font-bold text-white">Log in or sign up</h2>
+        <p className="text-text-secondary mt-2 text-sm">Enter your phone or email — we'll send a code. New or returning, same step.</p>
       </div>
 
       <div className="space-y-3">
@@ -538,7 +538,7 @@ function RoleSelection({ role, onChange, onNext, referralCode, onReferralChange 
     >
       <div className="text-center">
         <h2 className="text-xl font-bold text-white">How will you use Delivra?</h2>
-        <p className="text-text-secondary mt-2 text-sm">You can always switch later.</p>
+        <p className="text-text-secondary mt-2 text-sm">New here? Pick one. Returning users keep their existing account.</p>
       </div>
 
       <div className="flex gap-2">

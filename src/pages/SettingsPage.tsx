@@ -13,12 +13,45 @@ interface Referral {
 }
 
 export default function SettingsPage() {
-  const { user, logout, loadUser } = useAuthStore()
+  const { user, logout, loadUser, requestOtp, verifyOtp } = useAuthStore()
   const toast = useToast()
   const [name, setName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [saving, setSaving] = useState(false)
   const [referral, setReferral] = useState<Referral | null>(null)
+
+  // Account linking (add another phone/email to this account)
+  const [addKind, setAddKind] = useState<'email' | 'phone' | null>(null)
+  const [linkContact, setLinkContact] = useState('')
+  const [linkStep, setLinkStep] = useState<'contact' | 'code'>('contact')
+  const [linkCode, setLinkCode] = useState('')
+  const [linking, setLinking] = useState(false)
+
+  const startLink = (kind: 'email' | 'phone') => {
+    setAddKind(kind); setLinkContact(''); setLinkCode(''); setLinkStep('contact')
+  }
+  const sendLinkCode = async () => {
+    if (!addKind || !linkContact.trim() || !user) return
+    setLinking(true)
+    try {
+      await requestOtp(linkContact.trim(), user.role, addKind)
+      setLinkStep('code')
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Failed to send code', 'error')
+    } finally { setLinking(false) }
+  }
+  const confirmLink = async () => {
+    if (!addKind || !user) return
+    setLinking(true)
+    try {
+      await verifyOtp(linkContact.trim(), linkCode.trim(), user.role, undefined, addKind)
+      await loadUser()
+      toast.show('Account linked ✓', 'success')
+      setAddKind(null); setLinkContact(''); setLinkCode('')
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Could not link', 'error')
+    } finally { setLinking(false) }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -109,6 +142,57 @@ export default function SettingsPage() {
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </motion.button>
+        </div>
+
+        {/* Sign-in methods (linked accounts) */}
+        <div className="glass rounded-xl p-4 space-y-3">
+          <h2 className="text-sm font-medium text-text-secondary">Sign-in methods</h2>
+          <div className="space-y-1.5">
+            {(user?.identities && user.identities.length > 0
+              ? user.identities
+              : [{ kind: user?.email ? 'email' : 'phone', value: user?.phone || user?.email || '—' }]
+            ).map((id) => (
+              <div key={id.value} className="flex items-center gap-2 text-sm">
+                <span>{id.kind === 'phone' ? '📱' : '✉️'}</span>
+                <span className="text-text-secondary">{id.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {!addKind ? (
+            <div className="flex gap-2">
+              <button onClick={() => startLink('email')} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">+ Email</button>
+              <button onClick={() => startLink('phone')} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">+ Phone</button>
+            </div>
+          ) : linkStep === 'contact' ? (
+            <div className="space-y-2">
+              <input
+                value={linkContact}
+                onChange={(e) => setLinkContact(e.target.value)}
+                placeholder={addKind === 'email' ? 'New email' : 'New phone (0801…)'}
+                className="w-full px-4 py-2.5 glass-light rounded-xl text-sm text-text-primary outline-none"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setAddKind(null)} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">Cancel</button>
+                <button onClick={sendLinkCode} disabled={linking} className="flex-1 py-2 bg-accent-primary rounded-xl text-sm text-white disabled:opacity-40">{linking ? 'Sending…' : 'Send code'}</button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <input
+                value={linkCode}
+                onChange={(e) => setLinkCode(e.target.value)}
+                placeholder="Enter code"
+                inputMode="numeric"
+                className="w-full px-4 py-2.5 glass-light rounded-xl text-sm text-text-primary outline-none"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setAddKind(null)} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">Cancel</button>
+                <button onClick={confirmLink} disabled={linking} className="flex-1 py-2 bg-accent-primary rounded-xl text-sm text-white disabled:opacity-40">{linking ? 'Linking…' : 'Verify & link'}</button>
+              </div>
+            </div>
+          )}
+          <p className="text-[11px] text-text-secondary/50">Link your phone and email to keep all your history in one account.</p>
         </div>
 
         {/* Referral / invite */}

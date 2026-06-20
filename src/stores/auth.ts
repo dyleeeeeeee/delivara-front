@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { api } from '../lib/api'
 
+export interface Identity {
+  kind: 'phone' | 'email'
+  value: string
+}
 interface User {
   id: string
   phone?: string
@@ -8,6 +12,7 @@ interface User {
   role: 'vendor' | 'rider'
   name?: string
   business_name?: string
+  identities?: Identity[]
 }
 
 interface AuthState {

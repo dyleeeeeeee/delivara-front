@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Map from '../components/Map'
 import GlassNavBar from '../components/GlassNavBar'
@@ -21,6 +21,7 @@ export default function RiderDashboard() {
   const [ratingSubmitted, setRatingSubmitted] = useState(false)
   const [counterOpen, setCounterOpen] = useState(false)
   const [counterFee, setCounterFee] = useState('')
+  const offerJobRef = useRef<Record<string, unknown> | null>(null)
   const { connect, disconnect, send, on } = useWSStore()
   const { activeJob, incomingRequest, setActiveJob, setIncomingRequest, updateJobStatus } = useJobsStore()
   const { startWatching, stopWatching, upgradeJobId, currentLat, currentLng, permissionDenied, httpsRequired, requestPermission } = useLocationStore()
@@ -66,9 +67,13 @@ export default function RiderDashboard() {
       }),
 
       on('JOB_ASSIGNED', (data) => {
-        const fullJob = data as any
-        setActiveJob(fullJob)
-        startWatching(fullJob.id)
+        const fullJob = data as Record<string, unknown>
+        // Merge over the optimistic/incoming job so addresses aren't lost if the
+        // assignment payload omits them.
+        const { activeJob: cur, incomingRequest: inc } = useJobsStore.getState()
+        setActiveJob({ ...(cur || inc || {}), ...fullJob } as never)
+        offerJobRef.current = null
+        startWatching(fullJob.id as string)
         setIncomingRequest(null)
         toast.show('Job accepted!', 'success')
       }),
@@ -88,6 +93,13 @@ export default function RiderDashboard() {
         toast.show('Offer sent — waiting for sender', 'info')
       }),
       on('OFFER_DECLINED', () => {
+        // Stop attaching location to a job we were never assigned, and bring the
+        // request back so the rider can accept at the suggested price.
+        useLocationStore.getState().upgradeJobId('idle')
+        if (offerJobRef.current) {
+          setIncomingRequest(offerJobRef.current as never)
+          offerJobRef.current = null
+        }
         toast.show('Sender declined your price', 'error')
       }),
       on('JOB_STATUS', (data) => {
@@ -173,6 +185,7 @@ export default function RiderDashboard() {
     send('ACCEPT_JOB', { job_id: req.id, fee })
     // Pre-arm the location watch in case the vendor accepts.
     upgradeJobId(req.id)
+    offerJobRef.current = req as unknown as Record<string, unknown> // remember it so we can restore on decline
     setIncomingRequest(null)
     setCounterOpen(false)
     setCounterFee('')

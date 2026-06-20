@@ -14,7 +14,19 @@ export async function api<T = unknown>(
     headers['Content-Type'] = 'application/json'
   }
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers })
+  // Abort slow requests so the UI never hangs forever on flaky internet.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 20000)
+  let res: Response
+  try {
+    res = await fetch(`${BASE}${path}`, { ...options, headers, signal: controller.signal })
+  } catch (e) {
+    throw new Error((e as Error)?.name === 'AbortError'
+      ? 'Network timed out — check your connection.'
+      : 'Network error — check your connection.')
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (res.status === 401) {
     localStorage.removeItem('delivara_token')

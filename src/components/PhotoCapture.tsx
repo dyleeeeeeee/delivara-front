@@ -14,6 +14,29 @@ export default function PhotoCapture({ jobId, onUploaded }: PhotoCaptureProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const toast = useToast()
 
+  // Downscale + convert to JPEG so the upload is small (fast on slow networks)
+  // and always a displayable format (phones often shoot HEIC). Falls back to the
+  // original file if the browser can't decode it.
+  const toJpeg = async (file: File): Promise<Blob> => {
+    try {
+      const bitmap = await createImageBitmap(file)
+      const max = 1280
+      const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height))
+      const w = Math.round(bitmap.width * scale)
+      const h = Math.round(bitmap.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return file
+      ctx.drawImage(bitmap, 0, 0, w, h)
+      const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), 'image/jpeg', 0.82))
+      return blob || file
+    } catch {
+      return file
+    }
+  }
+
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -22,8 +45,9 @@ export default function PhotoCapture({ jobId, onUploaded }: PhotoCaptureProps) {
     setUploading(true)
 
     try {
+      const blob = await toJpeg(file)
       const form = new FormData()
-      form.append('proof', file)
+      form.append('proof', blob, 'proof.jpg')
 
       const shortId = jobId.replace('jobs:', '')
       const res = await api<{ photo_url: string }>(`/api/jobs/${shortId}/proof`, {

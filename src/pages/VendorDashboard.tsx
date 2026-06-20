@@ -23,6 +23,7 @@ export default function VendorDashboard() {
   const [onlineRiders, setOnlineRiders] = useState<Record<string, { lat: number; lng: number; available?: boolean; ts: number }>>({})
   const [vendorPos, setVendorPos] = useState<{ lat: number; lng: number } | null>(null)
   const { connect, disconnect, on, send } = useWSStore()
+  const connected = useWSStore((s) => s.connected)
   const toast = useToast()
   const navigate = useNavigate()
   const {
@@ -182,6 +183,8 @@ export default function VendorDashboard() {
   }, [])
 
   const activeJobs = jobs.filter((j) => j.status !== 'COMPLETED')
+  // A just-created job still looking for a rider.
+  const broadcasting = activeJobs.find((j) => j.status === 'BROADCASTING' || j.status === 'CREATED')
 
   // Don't double-mark the assigned rider — they get the dedicated RiderMarker.
   const presenceRiders = { ...onlineRiders }
@@ -199,6 +202,42 @@ export default function VendorDashboard() {
 
       {/* Live online-rider dots */}
       <OnlineRidersLayer map={mapInstance} riders={presenceRiders} />
+
+      {/* Reconnecting banner — so a network blip doesn't look like a frozen app */}
+      {!connected && (
+        <div className="absolute top-0 left-0 right-0 z-40">
+          <div className="bg-yellow-500/90 text-black text-xs font-medium text-center py-1.5 flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-black/60 animate-pulse" />
+            Reconnecting… your actions will send once you're back online
+          </div>
+        </div>
+      )}
+
+      {/* Finding a rider — clear feedback while a job is broadcasting */}
+      {!activeJob && broadcasting && (
+        <div className="absolute top-16 left-4 right-4 z-10">
+          <div className="glass rounded-2xl p-5 text-center">
+            <div className="relative mx-auto w-16 h-16 mb-3">
+              <span className="absolute inset-0 rounded-full bg-accent-primary/30 animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-accent-primary/20 flex items-center justify-center text-2xl">🔍</span>
+            </div>
+            <p className="font-bold">Finding you a rider…</p>
+            <p className="text-xs text-text-secondary mt-1">
+              Broadcasting to riders near {broadcasting.pickup_address}. This usually takes under a minute.
+            </p>
+            {nearbyCount !== null && (
+              <p className="text-[11px] text-text-secondary/60 mt-2">
+                {nearbyCount > 0
+                  ? `${nearbyCount} rider${nearbyCount === 1 ? '' : 's'} nearby being notified`
+                  : 'Reaching a little wider — hang tight'}
+              </p>
+            )}
+            {typeof broadcasting.fee === 'number' && (
+              <p className="text-[11px] text-accent-secondary mt-1">Dispatch fee ₦{broadcasting.fee.toLocaleString()}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Live supply density — always visible to the vendor */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
@@ -314,7 +353,7 @@ export default function VendorDashboard() {
 
       {/* No active job — show job list */}
       <AnimatePresence>
-        {!activeJob && activeJobs.length > 0 && (
+        {!activeJob && !broadcasting && activeJobs.length > 0 && (
           <motion.div
             initial={{ y: 100 }}
             animate={{ y: 0 }}

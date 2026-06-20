@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
+import mapboxgl from 'mapbox-gl'
 
 import Map from '../components/Map'
-import StatusChip from '../components/StatusChip'
 import RiderMarker from '../components/RiderMarker'
 import { api } from '../lib/api'
+import { fetchRouteGeoJSON } from '../lib/directions'
 
 interface TrackingJob {
   id: string
@@ -17,6 +18,32 @@ interface TrackingJob {
   dropoff_lng: number
   tracking_slug: string
   fee?: number
+  package_description?: string
+}
+
+const STEPS = [
+  { key: 'finding', label: 'Finding a rider' },
+  { key: 'assigned', label: 'Rider assigned' },
+  { key: 'picked', label: 'Picked up' },
+  { key: 'transit', label: 'On the way' },
+  { key: 'delivered', label: 'Delivered' },
+]
+
+function stepIndex(status: string): number {
+  switch (status) {
+    case 'ASSIGNED': return 1
+    case 'PICKED_UP': return 2
+    case 'IN_TRANSIT': return 3
+    case 'DELIVERED':
+    case 'COMPLETED': return 4
+    default: return 0 // CREATED / BROADCASTING
+  }
+}
+
+function addPin(map: mapboxgl.Map, lng: number, lat: number, color: string) {
+  const el = document.createElement('div')
+  el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color};border:3px solid #05070D;box-shadow:0 0 12px ${color};`
+  return new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map)
 }
 
 export default function TrackingPage() {
@@ -35,10 +62,61 @@ export default function TrackingPage() {
       .catch(() => setError('Delivery not found'))
   }, [slug])
 
+  // Draw pickup/dropoff markers + the suggested route, and fit the map to it.
+  useEffect(() => {
+    if (!mapInstance || !job) return
+    const map = mapInstance
+    const pickup: [number, number] = [job.pickup_lng, job.pickup_lat]
+    const dropoff: [number, number] = [job.dropoff_lng, job.dropoff_lat]
+
+    const m1 = addPin(map, pickup[0], pickup[1], '#22c55e')
+    const m2 = addPin(map, dropoff[0], dropoff[1], '#22D3EE')
+
+    const bounds = new mapboxgl.LngLatBounds(pickup, pickup).extend(dropoff)
+    map.fitBounds(bounds, { padding: 70, maxZoom: 15, duration: 800 })
+
+    let cancelled = false
+    fetchRouteGeoJSON(pickup, dropoff).then((feat) => {
+      if (cancelled || !feat) return
+      const draw = () => {
+        const src = map.getSource('delivra-route') as mapboxgl.GeoJSONSource | undefined
+        if (src) {
+          src.setData(feat as never)
+        } else {
+          map.addSource('delivra-route', { type: 'geojson', data: feat as never })
+          map.addLayer({
+            id: 'delivra-route-line',
+            type: 'line',
+            source: 'delivra-route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#6366f1', 'line-width': 4, 'line-opacity': 0.85 },
+          })
+        }
+        const coords = feat.geometry.coordinates as [number, number][]
+        if (coords.length) {
+          const rb = coords.reduce(
+            (bb, c) => bb.extend(c),
+            new mapboxgl.LngLatBounds(coords[0], coords[0])
+          )
+          map.fitBounds(rb, { padding: 70, maxZoom: 15, duration: 800 })
+        }
+      }
+      if (map.isStyleLoaded()) draw()
+      else map.once('idle', draw)
+    })
+
+    return () => {
+      cancelled = true
+      m1.remove()
+      m2.remove()
+      if (map.getLayer('delivra-route-line')) map.removeLayer('delivra-route-line')
+      if (map.getSource('delivra-route')) map.removeSource('delivra-route')
+    }
+  }, [mapInstance, job?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Live updates over WebSocket with reconnect.
   useEffect(() => {
     if (!job || job.status === 'COMPLETED') return
-
-    // Default to a secure ws:// scheme matching the page protocol.
     const fallback = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
     const wsUrl = import.meta.env.VITE_WS_URL || fallback
 
@@ -50,15 +128,10 @@ export default function TrackingPage() {
     const connect = () => {
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
-
       ws.onopen = () => {
         delay = 1000
-        ws.send(JSON.stringify({
-          type: 'TRACK_SUBSCRIBE',
-          data: { tracking_slug: slug, job_id: job.id },
-        }))
+        ws.send(JSON.stringify({ type: 'TRACK_SUBSCRIBE', data: { tracking_slug: slug, job_id: job.id } }))
       }
-
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data)
@@ -75,15 +148,10 @@ export default function TrackingPage() {
           if (msg.type === 'STATE_SNAPSHOT' && msg.data?.status) {
             setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
           }
-          if (msg.type === 'JOB_COMPLETED' || msg.data?.status === 'COMPLETED') {
-            completed = true
-          }
+          if (msg.type === 'JOB_COMPLETED' || msg.data?.status === 'COMPLETED') completed = true
         } catch {}
       }
-
       ws.onerror = () => ws.close()
-
-      // Reconnect with exponential backoff on unexpected close.
       ws.onclose = () => {
         wsRef.current = null
         if (intentional || completed) return
@@ -93,9 +161,7 @@ export default function TrackingPage() {
         }, delay)
       }
     }
-
     connect()
-
     return () => {
       intentional = true
       if (reconnectTimer) clearTimeout(reconnectTimer)
@@ -111,7 +177,6 @@ export default function TrackingPage() {
       </div>
     )
   }
-
   if (!job) {
     return (
       <div className="h-full flex items-center justify-center bg-bg-primary">
@@ -120,57 +185,105 @@ export default function TrackingPage() {
     )
   }
 
-  const center: [number, number] =
-    riderLat != null && riderLng != null
-      ? [riderLng, riderLat]
-      : [job.dropoff_lng, job.dropoff_lat]
+  const active = stepIndex(job.status)
+  const hasRider = riderLat != null && riderLng != null
+  const headline =
+    job.status === 'COMPLETED' || job.status === 'DELIVERED'
+      ? 'Delivered ✓'
+      : active === 0
+      ? 'Finding a rider nearby…'
+      : hasRider
+      ? 'Your rider is on the move'
+      : 'Rider assigned — heading to pickup'
 
   return (
     <div className="relative h-full w-full">
-      <Map onMapReady={setMapInstance} center={center} />
+      <Map onMapReady={setMapInstance} />
 
-      {riderLat != null && riderLng != null && mapInstance && (
-        <RiderMarker map={mapInstance} lat={riderLat} lng={riderLng} />
+      {hasRider && mapInstance && (
+        <RiderMarker map={mapInstance} lat={riderLat as number} lng={riderLng as number} />
       )}
 
+      {/* Top status banner */}
       <div className="absolute top-4 left-4 right-4 z-10">
-        <div className="glass rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Live Tracking</span>
-            <StatusChip status={job.status} />
+        <div className="glass rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${active >= 4 ? 'bg-green-400' : 'bg-accent-secondary animate-pulse'}`} />
+            <span className="text-sm font-semibold">{headline}</span>
           </div>
-          <p className="text-xs text-text-secondary">{job.pickup_address}</p>
-          <p className="text-xs text-text-secondary mt-1">→ {job.dropoff_address}</p>
-
-          {typeof job.fee === 'number' && job.status !== 'COMPLETED' && (
-            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-              <span className="text-xs text-text-secondary/70">Dispatch fee</span>
-              <span className="text-sm font-bold text-accent-secondary">
-                ₦{job.fee.toLocaleString()}
-                <span className="ml-1 text-[10px] font-normal text-text-secondary/60">pay rider</span>
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
-      {job.status === 'COMPLETED' && (
-        <div className="absolute bottom-24 left-4 right-4 z-10">
-          <div className="glass rounded-xl p-4 text-center">
-            <p className="text-sm font-medium text-green-400">✓ Delivery Complete</p>
+      {/* Bottom sheet — details */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <div className="glass rounded-t-3xl p-5 pb-6 space-y-4">
+          {/* Timeline */}
+          <div className="flex items-center justify-between">
+            {STEPS.map((s, i) => (
+              <div key={s.key} className="flex-1 flex flex-col items-center">
+                <div className="flex items-center w-full">
+                  {i > 0 && <div className={`h-0.5 flex-1 ${i <= active ? 'bg-accent-primary' : 'bg-white/10'}`} />}
+                  <div
+                    className={`w-3 h-3 rounded-full shrink-0 ${
+                      i < active ? 'bg-accent-primary' : i === active ? 'bg-accent-secondary ring-4 ring-accent-secondary/20' : 'bg-white/15'
+                    }`}
+                  />
+                  {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 ${i < active ? 'bg-accent-primary' : 'bg-white/10'}`} />}
+                </div>
+                <span className={`text-[9px] mt-1.5 text-center ${i <= active ? 'text-text-primary' : 'text-text-secondary/50'}`}>
+                  {s.label}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
 
-      {/* Growth loop — every tracking link is a chance to win a new vendor */}
-      <div className="absolute bottom-6 left-4 right-4 z-10">
-        <a
-          href="https://delivra.ng/login"
-          className="block glass rounded-xl px-4 py-3 text-center hover:bg-white/5 transition-colors"
-        >
-          <p className="text-xs text-text-secondary/70">Powered by <span className="text-accent-primary font-semibold">Delivra</span></p>
-          <p className="text-sm font-medium text-text-primary mt-0.5">Send your own delivery →</p>
-        </a>
+          {/* Route */}
+          <div className="glass-light rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-green-400 shrink-0" />
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Pickup</p>
+                <p className="text-sm">{job.pickup_address}</p>
+              </div>
+            </div>
+            <div className="ml-1 h-3 border-l border-dashed border-white/15" />
+            <div className="flex items-start gap-2.5">
+              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-accent-secondary shrink-0" />
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Dropoff</p>
+                <p className="text-sm">{job.dropoff_address}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Item + fee */}
+          <div className="flex items-center gap-3">
+            {job.package_description && (
+              <div className="flex-1 glass-light rounded-xl px-3 py-2.5 flex items-center gap-2">
+                <span>📦</span>
+                <span className="text-xs text-text-secondary truncate">{job.package_description}</span>
+              </div>
+            )}
+            {typeof job.fee === 'number' && job.status !== 'COMPLETED' && (
+              <div className="glass-light rounded-xl px-3 py-2.5 text-right">
+                <p className="text-[10px] text-text-secondary/60">Dispatch fee</p>
+                <p className="text-sm font-bold text-accent-secondary">
+                  ₦{job.fee.toLocaleString()} <span className="text-[10px] font-normal text-text-secondary/60">pay rider</span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Growth loop */}
+          <a
+            href="https://delivra.ng/login"
+            className="block rounded-xl px-4 py-3 text-center bg-accent-primary/10 border border-accent-primary/25 hover:bg-accent-primary/15 transition-colors"
+          >
+            <span className="text-xs text-text-secondary/70">Powered by </span>
+            <span className="text-xs text-accent-primary font-semibold">Delivra</span>
+            <span className="text-sm font-medium text-text-primary"> · Send your own delivery →</span>
+          </a>
+        </div>
       </div>
     </div>
   )

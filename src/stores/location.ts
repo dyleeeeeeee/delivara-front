@@ -84,14 +84,13 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         if (now - lastSent >= THROTTLE_MS) {
           lastSent = now
           const currentJobId = useLocationStore.getState().jobId
-          // Only send LOCATION_UPDATE when on a real job (not idle)
+          // Always stream position so the rider's live dot shows on vendor maps.
+          // Attach job_id only when on a real job (drives tracking/ETA).
+          const payload: { lat: number; lng: number; job_id?: string } = { lat, lng }
           if (currentJobId && currentJobId !== 'idle') {
-            useWSStore.getState().send('LOCATION_UPDATE', {
-              lat,
-              lng,
-              job_id: currentJobId,
-            })
+            payload.job_id = currentJobId
           }
+          useWSStore.getState().send('LOCATION_UPDATE', payload)
         }
       },
       (err) => {

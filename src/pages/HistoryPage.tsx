@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
 import StatusChip from '../components/StatusChip'
+import Toast, { useToast } from '../components/Toast'
 import { api } from '../lib/api'
 
 interface HistoryJob {
@@ -18,6 +19,17 @@ export default function HistoryPage() {
   const [jobs, setJobs] = useState<HistoryJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const toast = useToast()
+
+  const copyLink = async (slug: string) => {
+    const link = `https://delivra.ng/track/${slug}`
+    try {
+      await navigator.clipboard.writeText(link)
+      toast.show('Tracking link copied', 'success')
+    } catch {
+      toast.show(link, 'info')
+    }
+  }
 
   const load = () => {
     setLoading(true)
@@ -34,12 +46,14 @@ export default function HistoryPage() {
   const active = jobs.filter((j) => j.status !== 'COMPLETED')
 
   const JobRow = ({ job, i, dim }: { job: HistoryJob; i: number; dim?: boolean }) => (
-    <motion.div
+    <motion.button
       key={job.id}
+      onClick={() => copyLink(job.tracking_slug)}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
       transition={{ delay: i * 0.04 }}
-      className={`glass rounded-xl p-4 ${dim ? 'opacity-60' : ''}`}
+      className={`w-full text-left glass rounded-xl p-4 ${dim ? 'opacity-60' : ''}`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-mono text-text-secondary/50">{job.tracking_slug}</span>
@@ -53,7 +67,10 @@ export default function HistoryPage() {
         <span className="text-cyan-400 text-xs mt-0.5 flex-shrink-0">●</span>
         <p className="text-xs text-text-secondary truncate">{job.dropoff_address}</p>
       </div>
-    </motion.div>
+      <div className="mt-2 flex items-center gap-1 text-[10px] text-accent-primary/80">
+        <span>🔗</span><span>Tap to copy tracking link</span>
+      </div>
+    </motion.button>
   )
 
   return (
@@ -119,6 +136,7 @@ export default function HistoryPage() {
 
       <GlassNavBar />
       <SideDrawer />
+      <Toast />
     </div>
   )
 }

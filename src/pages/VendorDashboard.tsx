@@ -6,6 +6,7 @@ import SideDrawer from '../components/SideDrawer'
 import JobSheet from '../components/JobSheet'
 import JobCard from '../components/JobCard'
 import RiderMarker from '../components/RiderMarker'
+import OnlineRidersLayer from '../components/OnlineRidersLayer'
 import StatusChip from '../components/StatusChip'
 import Toast from '../components/Toast'
 import { useWSStore } from '../stores/ws'
@@ -17,6 +18,7 @@ export default function VendorDashboard() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [cameraFollow, setCameraFollow] = useState(true)
   const [offer, setOffer] = useState<{ job_id: string; rider_id: string; fee: number; suggested_fee?: number; rider_name?: string; rider_rating?: number } | null>(null)
+  const [onlineRiders, setOnlineRiders] = useState<Record<string, { lat: number; lng: number; available?: boolean; ts: number }>>({})
   const { connect, disconnect, on, send } = useWSStore()
   const {
     jobs, activeJob, riderLocation,
@@ -79,6 +81,25 @@ export default function VendorDashboard() {
         setOffer(data as never)
       }),
 
+      on('RIDER_PRESENCE_SNAPSHOT', (data) => {
+        const d = data as { riders?: Array<{ rider_id: string; lat: number; lng: number; available?: boolean }> }
+        const next: Record<string, { lat: number; lng: number; available?: boolean; ts: number }> = {}
+        ;(d.riders || []).forEach((r) => { next[r.rider_id] = { lat: r.lat, lng: r.lng, available: r.available, ts: Date.now() } })
+        setOnlineRiders(next)
+      }),
+      on('RIDER_PRESENCE', (data) => {
+        const r = data as { rider_id: string; lat: number; lng: number; available?: boolean }
+        setOnlineRiders((prev) => ({ ...prev, [r.rider_id]: { lat: r.lat, lng: r.lng, available: r.available, ts: Date.now() } }))
+      }),
+      on('RIDER_OFFLINE_PRESENCE', (data) => {
+        const r = data as { rider_id: string }
+        setOnlineRiders((prev) => {
+          const n = { ...prev }
+          delete n[r.rider_id]
+          return n
+        })
+      }),
+
       on('STATE_SNAPSHOT', (data) => {
         const d = data as { jobs?: Array<Record<string, unknown>> }
         if (d.jobs) {
@@ -117,11 +138,48 @@ export default function VendorDashboard() {
     return () => window.removeEventListener('snapToLocation', snapToLocation)
   }, [mapInstance])
 
+  // Drop rider dots that stop reporting (offline/disconnect) after 15s.
+  useEffect(() => {
+    const id = setInterval(() => {
+      setOnlineRiders((prev) => {
+        const now = Date.now()
+        let changed = false
+        const next: typeof prev = {}
+        for (const [k, v] of Object.entries(prev)) {
+          if (now - v.ts < 15000) next[k] = v
+          else changed = true
+        }
+        return changed ? next : prev
+      })
+    }, 5000)
+    return () => clearInterval(id)
+  }, [])
+
   const activeJobs = jobs.filter((j) => j.status !== 'COMPLETED')
+
+  // Don't double-mark the assigned rider — they get the dedicated RiderMarker.
+  const presenceRiders = { ...onlineRiders }
+  if (activeJob?.rider_id) delete presenceRiders[activeJob.rider_id]
+  const onlineCount = Object.keys(onlineRiders).length
 
   return (
     <div className="relative h-full w-full">
       <Map onMapReady={setMapInstance} />
+
+      {/* Live online-rider dots */}
+      <OnlineRidersLayer map={mapInstance} riders={presenceRiders} />
+
+      {/* Supply-density cue when idle */}
+      {!activeJob && onlineCount > 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+          <div className="glass rounded-full px-3 py-1.5 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs text-text-secondary">
+              {onlineCount} rider{onlineCount > 1 ? 's' : ''} online
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Rider counter-offer — accept to match at their price */}
       <AnimatePresence>

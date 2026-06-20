@@ -242,7 +242,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
               className="w-full py-4 bg-accent-primary rounded-2xl text-white font-bold text-base glow-primary"
               style={{ boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }}
             >
-              Create Delivery →
+              Find a rider →
             </motion.button>
           </motion.div>
 
@@ -268,7 +268,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
             {/* Header */}
             <div className="flex-shrink-0 px-6 pb-3 flex items-center justify-between">
-              <h3 className="text-lg font-bold">New Delivery</h3>
+              <h3 className="text-lg font-bold">Send a package</h3>
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full glass-light flex items-center justify-center text-text-secondary text-sm"

@@ -1,7 +1,7 @@
 {
-  "name": "Delivara",
-  "short_name": "Delivara",
-  "description": "Real-time delivery tracking platform",
+  "name": "Delivra — Send anything, anywhere",
+  "short_name": "Delivra",
+  "description": "Send a package and get a dispatch rider in minutes. Live tracking, fair upfront pricing.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

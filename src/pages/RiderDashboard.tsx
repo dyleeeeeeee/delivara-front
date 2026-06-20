@@ -85,10 +85,10 @@ export default function RiderDashboard() {
         toast.show('Job already taken', 'error')
       }),
       on('OFFER_SENT', () => {
-        toast.show('Offer sent — waiting for vendor', 'info')
+        toast.show('Offer sent — waiting for sender', 'info')
       }),
       on('OFFER_DECLINED', () => {
-        toast.show('Vendor declined your price', 'error')
+        toast.show('Sender declined your price', 'error')
       }),
       on('JOB_STATUS', (data) => {
         const d = data as { job_id: string; status: string }
@@ -401,7 +401,7 @@ export default function RiderDashboard() {
                       </motion.button>
                     </div>
                     <p className="text-[11px] text-text-secondary/60 mt-2">
-                      The vendor gets your offer and matches if they accept.
+                      The sender gets your offer and matches if they accept.
                     </p>
                   </div>
                 )}
@@ -493,7 +493,7 @@ export default function RiderDashboard() {
 
           {activeJob.status === 'COMPLETED' && !ratingSubmitted && (
             <div className="glass rounded-2xl p-4 space-y-3">
-              <p className="text-sm font-medium">Rate this vendor</p>
+              <p className="text-sm font-medium">Rate the sender</p>
               <StarRating value={rating} onChange={setRating} />
               <motion.button
                 whileTap={{ scale: 0.95 }}

@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
           {user?.role === 'vendor' && (
             <div>
-              <label className="text-xs text-text-secondary/60">Business Name</label>
+              <label className="text-xs text-text-secondary/60">Business name (optional)</label>
               <input
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}

@@ -234,14 +234,19 @@ function WelcomeScreen({ onNext }: { onNext: () => void }) {
         </motion.div>
         <div>
           <h1 className="text-3xl font-bold text-white">Delivra</h1>
-          <p className="text-text-secondary mt-2 text-sm">Real-time delivery platform</p>
+          <p className="text-text-secondary mt-2 text-sm">
+            Tired of chasing dispatch riders across 10 apps?
+          </p>
+          <p className="text-accent-primary mt-1 text-sm font-medium">
+            Send anything, anywhere — one tap.
+          </p>
         </div>
       </div>
 
       <div className="space-y-3 text-left">
-        <FeatureItem icon="⚡" text="Instant delivery tracking" />
-        <FeatureItem icon="📍" text="Real-time location updates" />
-        <FeatureItem icon="📱" text="Easy rider & vendor tools" />
+        <FeatureItem icon="🏍️" text="A dispatch rider in minutes" />
+        <FeatureItem icon="📍" text="Track your rider live, door to door" />
+        <FeatureItem icon="💸" text="Fair price, set upfront — no haggling" />
       </div>
 
       <motion.button
@@ -532,22 +537,25 @@ function RoleSelection({ role, onChange, onNext, referralCode, onReferralChange 
       className="space-y-4"
     >
       <div className="text-center">
-        <h2 className="text-xl font-bold text-white">Choose your role</h2>
-        <p className="text-text-secondary mt-2 text-sm">How will you use Delivra?</p>
+        <h2 className="text-xl font-bold text-white">How will you use Delivra?</h2>
+        <p className="text-text-secondary mt-2 text-sm">You can always switch later.</p>
       </div>
 
       <div className="flex gap-2">
-        {(['vendor', 'rider'] as const).map((r) => (
+        {([
+          { value: 'vendor', label: 'Send packages' },
+          { value: 'rider', label: 'Deliver & earn' },
+        ] as const).map((r) => (
           <button
-            key={r}
-            onClick={() => onChange(r)}
-            className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all capitalize ${
-              role === r
+            key={r.value}
+            onClick={() => onChange(r.value)}
+            className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+              role === r.value
                 ? 'bg-accent-primary text-white glow-primary'
                 : 'glass-light text-text-secondary'
             }`}
           >
-            {r}
+            {r.label}
           </button>
         ))}
       </div>
@@ -595,8 +603,8 @@ function CompleteScreen({ onContinue }: { onContinue: () => void }) {
       </div>
 
       <div className="space-y-2 text-left">
-        <NextStep icon="📦" text="Create your first delivery" />
-        <NextStep icon="📍" text="Track in real-time" />
+        <NextStep icon="📦" text="Send your first package" />
+        <NextStep icon="📍" text="Track your rider in real-time" />
         <NextStep icon="⚡" text="Get instant notifications" />
       </div>
 

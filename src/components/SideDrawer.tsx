@@ -62,19 +62,13 @@ export default function SideDrawer() {
               {/* Coming soon items */}
               <div className="px-4 py-3 text-text-secondary/40 flex items-center gap-3">
                 <span>💳</span>
-                <span className="text-sm">Payments</span>
-                <span className="text-[10px] ml-auto bg-white/10 px-2 py-0.5 rounded-full">Soon</span>
-              </div>
-
-              <div className="px-4 py-3 text-text-secondary/40 flex items-center gap-3">
-                <span>🏪</span>
-                <span className="text-sm">Become a Vendor</span>
+                <span className="text-sm">Wallet &amp; autopay</span>
                 <span className="text-[10px] ml-auto bg-white/10 px-2 py-0.5 rounded-full">Soon</span>
               </div>
 
               <div className="px-4 py-3 text-text-secondary/40 flex items-center gap-3">
                 <span>🏍️</span>
-                <span className="text-sm">Become a Rider</span>
+                <span className="text-sm">Earn as a rider</span>
                 <span className="text-[10px] ml-auto bg-white/10 px-2 py-0.5 rounded-full">Soon</span>
               </div>
             </div>

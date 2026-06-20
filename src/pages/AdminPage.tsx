@@ -107,7 +107,7 @@ export default function AdminPage() {
                   accent={metrics.jobs_expired > 0 ? 'text-red-400' : 'text-text-primary'} />
             <Stat label="Signups today" value={metrics.signups_today} />
             <Stat label="Signups / week" value={metrics.signups_this_week} />
-            <Stat label="Vendors" value={metrics.vendors} />
+            <Stat label="Senders" value={metrics.vendors} />
             <Stat label="Riders" value={metrics.riders} />
             <Stat label="Jobs / week" value={metrics.jobs_this_week} />
             <Stat label="Jobs total" value={metrics.jobs_total} />

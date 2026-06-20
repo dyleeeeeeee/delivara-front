@@ -7,6 +7,7 @@ import VendorDashboard from './pages/VendorDashboard'
 import RiderDashboard from './pages/RiderDashboard'
 import TrackingPage from './pages/TrackingPage'
 import AdminPage from './pages/AdminPage'
+import WalletPage from './pages/WalletPage'
 import HistoryPage from './pages/HistoryPage'
 import RatingsPage from './pages/RatingsPage'
 import SettingsPage from './pages/SettingsPage'
@@ -68,6 +69,14 @@ export default function App() {
             <RoleRoute role="rider">
               <RiderDashboard />
             </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/wallet"
+        element={
+          <ProtectedRoute>
+            <WalletPage />
           </ProtectedRoute>
         }
       />

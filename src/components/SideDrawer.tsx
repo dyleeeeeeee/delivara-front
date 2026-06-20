@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 
 const MENU_ITEMS = [
   { path: '/', label: 'Dashboard', icon: '⬡' },
+  { path: '/wallet', label: 'Wallet', icon: '💳' },
   { path: '/settings', label: 'Settings', icon: '⚙' },
 ]
 
@@ -36,10 +37,10 @@ export default function SideDrawer() {
             className="fixed left-0 top-0 bottom-0 w-[280px] glass z-50 flex flex-col p-6"
           >
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-accent-primary">Delivara</h2>
+              <h2 className="text-xl font-bold text-accent-primary">Delivra</h2>
               {user && (
-                <p className="text-xs text-text-secondary mt-1 capitalize">
-                  {user.role} · {user.phone}
+                <p className="text-xs text-text-secondary mt-1">
+                  {user.role === 'rider' ? 'Rider' : 'Sender'} · {user.phone || user.email}
                 </p>
               )}
             </div>
@@ -60,12 +61,6 @@ export default function SideDrawer() {
               <div className="my-2 border-t border-white/5" />
 
               {/* Coming soon items */}
-              <div className="px-4 py-3 text-text-secondary/40 flex items-center gap-3">
-                <span>💳</span>
-                <span className="text-sm">Wallet &amp; autopay</span>
-                <span className="text-[10px] ml-auto bg-white/10 px-2 py-0.5 rounded-full">Soon</span>
-              </div>
-
               <div className="px-4 py-3 text-text-secondary/40 flex items-center gap-3">
                 <span>🏍️</span>
                 <span className="text-sm">Earn as a rider</span>

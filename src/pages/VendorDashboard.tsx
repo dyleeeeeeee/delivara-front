@@ -8,9 +8,10 @@ import JobCard from '../components/JobCard'
 import RiderMarker from '../components/RiderMarker'
 import OnlineRidersLayer from '../components/OnlineRidersLayer'
 import StatusChip from '../components/StatusChip'
-import Toast from '../components/Toast'
+import Toast, { useToast } from '../components/Toast'
 import { useWSStore } from '../stores/ws'
 import { useJobsStore } from '../stores/jobs'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function VendorDashboard() {
@@ -20,6 +21,8 @@ export default function VendorDashboard() {
   const [offer, setOffer] = useState<{ job_id: string; rider_id: string; fee: number; suggested_fee?: number; rider_name?: string; rider_rating?: number } | null>(null)
   const [onlineRiders, setOnlineRiders] = useState<Record<string, { lat: number; lng: number; available?: boolean; ts: number }>>({})
   const { connect, disconnect, on, send } = useWSStore()
+  const toast = useToast()
+  const navigate = useNavigate()
   const {
     jobs, activeJob, riderLocation,
     setActiveJob, setRiderLocation, updateJobStatus, addJob, fetchJobs,
@@ -79,6 +82,16 @@ export default function VendorDashboard() {
 
       on('JOB_OFFER', (data) => {
         setOffer(data as never)
+      }),
+
+      on('ERROR', (data) => {
+        const d = data as { message?: string; code?: string }
+        if (d.code === 'INSUFFICIENT_FUNDS') {
+          toast.show('Top up your wallet to send', 'error')
+          navigate('/wallet')
+        } else if (d.message) {
+          toast.show(d.message, 'error')
+        }
       }),
 
       on('RIDER_PRESENCE_SNAPSHOT', (data) => {

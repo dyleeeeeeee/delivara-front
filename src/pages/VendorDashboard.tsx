@@ -16,7 +16,8 @@ export default function VendorDashboard() {
   const [mapInstance, setMapInstance] = useState<MapboxMap | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [cameraFollow, setCameraFollow] = useState(true)
-  const { connect, disconnect, on } = useWSStore()
+  const [offer, setOffer] = useState<{ job_id: string; rider_id: string; fee: number; suggested_fee?: number; rider_name?: string; rider_rating?: number } | null>(null)
+  const { connect, disconnect, on, send } = useWSStore()
   const {
     jobs, activeJob, riderLocation,
     setActiveJob, setRiderLocation, updateJobStatus, addJob, fetchJobs,
@@ -38,6 +39,7 @@ export default function VendorDashboard() {
       on('JOB_ACCEPTED', (data) => {
         const d = data as { job_id: string; status: string; rider_id: string }
         updateJobStatus(d.job_id, d.status)
+        setOffer(null) // resolve any pending counter-offer
         // Auto-set the accepted job as active so location updates aren't dropped
         const { jobs: currentJobs } = useJobsStore.getState()
         const accepted = currentJobs.find((j) => j.id === d.job_id)
@@ -71,6 +73,10 @@ export default function VendorDashboard() {
           setActiveJob(null)
           setRiderLocation(null)
         }
+      }),
+
+      on('JOB_OFFER', (data) => {
+        setOffer(data as never)
       }),
 
       on('STATE_SNAPSHOT', (data) => {
@@ -116,6 +122,61 @@ export default function VendorDashboard() {
   return (
     <div className="relative h-full w-full">
       <Map onMapReady={setMapInstance} />
+
+      {/* Rider counter-offer — accept to match at their price */}
+      <AnimatePresence>
+        {offer && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-40"
+            />
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              className="fixed left-4 right-4 bottom-24 z-50 glass rounded-2xl p-5"
+            >
+              <p className="text-sm font-bold mb-1">Rider counter-offer</p>
+              <p className="text-xs text-text-secondary mb-3">
+                {offer.rider_name || 'A rider'}
+                {typeof offer.rider_rating === 'number' ? ` · ${offer.rider_rating.toFixed(1)}★` : ''}
+                {' '}wants to do this delivery at their price.
+              </p>
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Their price</p>
+                  <p className="text-2xl font-bold text-accent-secondary">₦{offer.fee.toLocaleString()}</p>
+                </div>
+                {typeof offer.suggested_fee === 'number' && (
+                  <p className="text-xs text-text-secondary/60">Suggested ₦{offer.suggested_fee.toLocaleString()}</p>
+                )}
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => {
+                    send('RESPOND_OFFER', { job_id: offer.job_id, rider_id: offer.rider_id, accept: false })
+                    setOffer(null)
+                  }}
+                  className="flex-1 py-3 glass-light rounded-xl text-text-secondary text-sm font-medium"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={() => {
+                    send('RESPOND_OFFER', { job_id: offer.job_id, rider_id: offer.rider_id, fee: offer.fee, accept: true })
+                  }}
+                  className="flex-1 py-3 bg-accent-primary rounded-xl text-white text-sm font-bold glow-primary"
+                >
+                  Accept ₦{offer.fee.toLocaleString()}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Rider marker — follows camera when cameraFollow is on */}
       {riderLocation && mapInstance && (

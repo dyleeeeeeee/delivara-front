@@ -69,6 +69,9 @@ export default function TrackingPage() {
           if (msg.type === 'JOB_STATUS' || msg.type === 'JOB_COMPLETED') {
             setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
           }
+          if (msg.type === 'JOB_ACCEPTED') {
+            setJob((prev) => (prev ? { ...prev, status: msg.data.status || prev.status, fee: msg.data.fee ?? prev.fee } : prev))
+          }
           if (msg.type === 'STATE_SNAPSHOT' && msg.data?.status) {
             setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
           }

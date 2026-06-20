@@ -19,6 +19,8 @@ export default function RiderDashboard() {
   const [proofUploaded, setProofUploaded] = useState(false)
   const [rating, setRating] = useState(0)
   const [ratingSubmitted, setRatingSubmitted] = useState(false)
+  const [counterOpen, setCounterOpen] = useState(false)
+  const [counterFee, setCounterFee] = useState('')
   const { connect, disconnect, send, on } = useWSStore()
   const { activeJob, incomingRequest, setActiveJob, setIncomingRequest, updateJobStatus } = useJobsStore()
   const { startWatching, stopWatching, upgradeJobId, currentLat, currentLng, permissionDenied, httpsRequired, requestPermission } = useLocationStore()
@@ -81,6 +83,12 @@ export default function RiderDashboard() {
       on('JOB_ASSIGN_FAILED', () => {
         setIncomingRequest(null)
         toast.show('Job already taken', 'error')
+      }),
+      on('OFFER_SENT', () => {
+        toast.show('Offer sent — waiting for vendor', 'info')
+      }),
+      on('OFFER_DECLINED', () => {
+        toast.show('Vendor declined your price', 'error')
       }),
       on('JOB_STATUS', (data) => {
         const d = data as { job_id: string; status: string }
@@ -154,8 +162,26 @@ export default function RiderDashboard() {
     setIncomingRequest(null)
   }
 
+  const sendCounter = () => {
+    const { incomingRequest: req } = useJobsStore.getState()
+    if (!req) return
+    const fee = parseInt(counterFee, 10)
+    if (!fee || fee <= 0) {
+      toast.show('Enter a valid amount', 'error')
+      return
+    }
+    send('ACCEPT_JOB', { job_id: req.id, fee })
+    // Pre-arm the location watch in case the vendor accepts.
+    upgradeJobId(req.id)
+    setIncomingRequest(null)
+    setCounterOpen(false)
+    setCounterFee('')
+  }
+
   const declineJob = () => {
     setIncomingRequest(null)
+    setCounterOpen(false)
+    setCounterFee('')
   }
 
   const advanceStatus = () => {
@@ -288,16 +314,28 @@ export default function RiderDashboard() {
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={declineJob}
-                  className="px-5 py-2 glass rounded-full text-text-secondary text-xs font-medium border border-white/10 shadow-2xl"
+                  className="px-4 py-2 glass rounded-full text-text-secondary text-xs font-medium border border-white/10 shadow-2xl"
                 >
                   Decline
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
-                  onClick={acceptJob}
-                  className="px-7 py-2 bg-accent-primary rounded-full text-white text-xs font-bold glow-primary shadow-2xl shadow-accent-primary/30"
+                  onClick={() => {
+                    setCounterFee(String(incomingRequest.fee ?? ''))
+                    setCounterOpen((v) => !v)
+                  }}
+                  className="px-4 py-2 glass rounded-full text-text-primary text-xs font-medium border border-white/10 shadow-2xl"
                 >
-                  Accept Job →
+                  Offer price
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={acceptJob}
+                  className="px-5 py-2 bg-accent-primary rounded-full text-white text-xs font-bold glow-primary shadow-2xl shadow-accent-primary/30"
+                >
+                  {typeof incomingRequest.fee === 'number'
+                    ? `Accept ₦${incomingRequest.fee.toLocaleString()}`
+                    : 'Accept →'}
                 </motion.button>
               </div>
 
@@ -334,6 +372,36 @@ export default function RiderDashboard() {
                     </div>
                     <p className="text-[11px] text-text-secondary/70 text-right max-w-[45%]">
                       Suggested by Delivra · paid by recipient on delivery
+                    </p>
+                  </div>
+                )}
+
+                {/* Counter-offer — propose your own price (vendor must approve) */}
+                {counterOpen && (
+                  <div className="rounded-2xl p-4 mb-4 glass-light border border-accent-primary/30">
+                    <p className="text-[11px] text-text-secondary/70 uppercase tracking-wide mb-2">Your price</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center flex-1 glass rounded-xl px-3 py-2.5">
+                        <span className="text-text-secondary mr-1">₦</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={counterFee}
+                          onChange={(e) => setCounterFee(e.target.value)}
+                          className="bg-transparent outline-none text-base font-semibold text-text-primary w-full"
+                          placeholder="Amount"
+                        />
+                      </div>
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
+                        onClick={sendCounter}
+                        className="px-5 py-2.5 bg-accent-primary rounded-xl text-white text-sm font-bold"
+                      >
+                        Send offer
+                      </motion.button>
+                    </div>
+                    <p className="text-[11px] text-text-secondary/60 mt-2">
+                      The vendor gets your offer and matches if they accept.
                     </p>
                   </div>
                 )}

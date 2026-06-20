@@ -37,41 +37,65 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!job || job.status === 'COMPLETED') return
 
-    // Use environment variable for WebSocket URL
-    const wsUrl = import.meta.env.VITE_WS_URL || `ws://${location.host}/ws`
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
+    // Default to a secure ws:// scheme matching the page protocol.
+    const fallback = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
+    const wsUrl = import.meta.env.VITE_WS_URL || fallback
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({
-        type: 'TRACK_SUBSCRIBE',
-        data: { tracking_slug: slug, job_id: job.id },
-      }))
+    let intentional = false
+    let completed = false
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let delay = 1000
+
+    const connect = () => {
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
+
+      ws.onopen = () => {
+        delay = 1000
+        ws.send(JSON.stringify({
+          type: 'TRACK_SUBSCRIBE',
+          data: { tracking_slug: slug, job_id: job.id },
+        }))
+      }
+
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data)
+          if (msg.type === 'LOCATION_UPDATE') {
+            setRiderLat(msg.data.lat)
+            setRiderLng(msg.data.lng)
+          }
+          if (msg.type === 'JOB_STATUS' || msg.type === 'JOB_COMPLETED') {
+            setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
+          }
+          if (msg.type === 'STATE_SNAPSHOT' && msg.data?.status) {
+            setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
+          }
+          if (msg.type === 'JOB_COMPLETED' || msg.data?.status === 'COMPLETED') {
+            completed = true
+          }
+        } catch {}
+      }
+
+      ws.onerror = () => ws.close()
+
+      // Reconnect with exponential backoff on unexpected close.
+      ws.onclose = () => {
+        wsRef.current = null
+        if (intentional || completed) return
+        reconnectTimer = setTimeout(() => {
+          delay = Math.min(delay * 2, 30000)
+          connect()
+        }, delay)
+      }
     }
 
-    ws.onmessage = (evt) => {
-      try {
-        const msg = JSON.parse(evt.data)
-        if (msg.type === 'LOCATION_UPDATE') {
-          setRiderLat(msg.data.lat)
-          setRiderLng(msg.data.lng)
-        }
-        if (msg.type === 'JOB_STATUS' || msg.type === 'JOB_COMPLETED') {
-          setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
-        }
-        if (msg.type === 'STATE_SNAPSHOT' && msg.data?.status) {
-          setJob((prev) => (prev ? { ...prev, status: msg.data.status } : prev))
-        }
-      } catch {}
-    }
-
-    // Reconnect on unexpected close (not intentional)
-    ws.onclose = () => {
-      wsRef.current = null
-    }
+    connect()
 
     return () => {
-      ws.close()
+      intentional = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      wsRef.current?.close()
       wsRef.current = null
     }
   }, [job?.id]) // eslint-disable-line react-hooks/exhaustive-deps

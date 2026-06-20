@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/auth'
+import { subscribePush } from './lib/push'
 import Onboarding from './components/Onboarding'
 import VendorDashboard from './pages/VendorDashboard'
 import RiderDashboard from './pages/RiderDashboard'
@@ -23,6 +25,12 @@ function RoleRoute({ role, children }: { role: string; children: React.ReactNode
 
 export default function App() {
   const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+
+  // Register for Web Push once authenticated (best-effort).
+  useEffect(() => {
+    if (token) subscribePush()
+  }, [token])
 
   return (
     <>

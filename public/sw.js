@@ -1,4 +1,4 @@
-const CACHE_NAME = 'delivara-v2'
+const CACHE_NAME = 'delivara-v3'
 const IMMUTABLE_ASSETS = /^\/assets\//
 
 self.addEventListener('install', (e) => {
@@ -34,5 +34,33 @@ self.addEventListener('fetch', (e) => {
   // Network-first for HTML and everything else
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
+  )
+})
+
+// ─── Web Push ───────────────────────────────────────────────────────────────
+self.addEventListener('push', (e) => {
+  let payload = {}
+  try { payload = e.data ? e.data.json() : {} } catch (_) { payload = {} }
+  const title = payload.title || 'Delivra'
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || '/icon-192.png',
+    badge: payload.badge || '/icon-192.png',
+    data: payload.data || {},
+  }
+  e.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const data = e.notification.data || {}
+  const target = data.url || '/'
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if ('focus' in c) return c.focus()
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target)
+    })
   )
 })

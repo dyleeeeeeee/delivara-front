@@ -12,6 +12,7 @@ import Toast, { useToast } from '../components/Toast'
 import { useWSStore } from '../stores/ws'
 import { useJobsStore } from '../stores/jobs'
 import { useNavigate } from 'react-router-dom'
+import { haversineKm, MATCH_RADIUS_KM } from '../lib/geo'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function VendorDashboard() {
@@ -20,6 +21,7 @@ export default function VendorDashboard() {
   const [cameraFollow, setCameraFollow] = useState(true)
   const [offer, setOffer] = useState<{ job_id: string; rider_id: string; fee: number; suggested_fee?: number; rider_name?: string; rider_rating?: number } | null>(null)
   const [onlineRiders, setOnlineRiders] = useState<Record<string, { lat: number; lng: number; available?: boolean; ts: number }>>({})
+  const [vendorPos, setVendorPos] = useState<{ lat: number; lng: number } | null>(null)
   const { connect, disconnect, on, send } = useWSStore()
   const toast = useToast()
   const navigate = useNavigate()
@@ -168,12 +170,28 @@ export default function VendorDashboard() {
     return () => clearInterval(id)
   }, [])
 
+  // Track the vendor's location to show nearby supply.
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    const id = navigator.geolocation.watchPosition(
+      (pos) => setVendorPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    )
+    return () => navigator.geolocation.clearWatch(id)
+  }, [])
+
   const activeJobs = jobs.filter((j) => j.status !== 'COMPLETED')
 
   // Don't double-mark the assigned rider — they get the dedicated RiderMarker.
   const presenceRiders = { ...onlineRiders }
   if (activeJob?.rider_id) delete presenceRiders[activeJob.rider_id]
   const onlineCount = Object.keys(onlineRiders).length
+  const nearbyCount = vendorPos
+    ? Object.values(onlineRiders).filter(
+        (r) => haversineKm(vendorPos.lat, vendorPos.lng, r.lat, r.lng) <= MATCH_RADIUS_KM
+      ).length
+    : null
 
   return (
     <div className="relative h-full w-full">
@@ -182,17 +200,21 @@ export default function VendorDashboard() {
       {/* Live online-rider dots */}
       <OnlineRidersLayer map={mapInstance} riders={presenceRiders} />
 
-      {/* Supply-density cue when idle */}
-      {!activeJob && onlineCount > 0 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-          <div className="glass rounded-full px-3 py-1.5 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-text-secondary">
-              {onlineCount} rider{onlineCount > 1 ? 's' : ''} online
-            </span>
-          </div>
+      {/* Live supply density — always visible to the vendor */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+        <div className="glass rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
+          <span
+            className={`w-2 h-2 rounded-full animate-pulse ${
+              (nearbyCount ?? onlineCount) > 0 ? 'bg-green-400' : 'bg-yellow-400'
+            }`}
+          />
+          <span className="text-xs text-text-secondary whitespace-nowrap">
+            {nearbyCount === null
+              ? `${onlineCount} rider${onlineCount === 1 ? '' : 's'} online`
+              : `${nearbyCount} rider${nearbyCount === 1 ? '' : 's'} online within ${MATCH_RADIUS_KM} km`}
+          </span>
         </div>
-      )}
+      </div>
 
       {/* Rider counter-offer — accept to match at their price */}
       <AnimatePresence>
@@ -261,7 +283,7 @@ export default function VendorDashboard() {
 
       {/* Active job card */}
       {activeJob && (
-        <div className="absolute top-4 left-4 right-4 z-10">
+        <div className="absolute top-14 left-4 right-4 z-10">
           <div className="glass rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Active Delivery</span>
@@ -308,7 +330,7 @@ export default function VendorDashboard() {
 
       {/* Rider location pulse when streaming */}
       {riderLocation && !activeJob && (
-        <div className="absolute top-4 left-4 right-4 z-10">
+        <div className="absolute top-14 left-4 right-4 z-10">
           <div className="glass rounded-xl px-4 py-3 flex items-center gap-2">
             <motion.span
               className="w-2 h-2 rounded-full bg-cyan-400"

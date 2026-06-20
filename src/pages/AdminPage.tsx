@@ -26,10 +26,19 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
   )
 }
 
+interface Payout {
+  id: string
+  amount: number
+  bank_name: string
+  account_number: string
+  account_name: string
+}
+
 export default function AdminPage() {
   const [token, setToken] = useState(localStorage.getItem('delivra_admin_token') || '')
   const [input, setInput] = useState('')
   const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const [payouts, setPayouts] = useState<Payout[]>([])
   const [error, setError] = useState('')
 
   const load = useCallback(async (t: string) => {
@@ -42,10 +51,20 @@ export default function AdminPage() {
       }
       setError('')
       setMetrics(await res.json())
+      try {
+        const pr = await fetch(`${BASE}/api/admin/payouts`, { headers: { 'X-Admin-Token': t } })
+        if (pr.ok) setPayouts(((await pr.json()).pending || []) as Payout[])
+      } catch { /* ignore */ }
     } catch {
       setError('Failed to load metrics')
     }
   }, [])
+
+  const markPaid = useCallback(async (id: string) => {
+    const bare = id.replace('payout_requests:', '')
+    await fetch(`${BASE}/api/admin/payouts/${bare}/mark-paid`, { method: 'POST', headers: { 'X-Admin-Token': token } })
+    load(token)
+  }, [token, load])
 
   useEffect(() => {
     if (!token) return
@@ -111,6 +130,31 @@ export default function AdminPage() {
             <Stat label="Riders" value={metrics.riders} />
             <Stat label="Jobs / week" value={metrics.jobs_this_week} />
             <Stat label="Jobs total" value={metrics.jobs_total} />
+          </div>
+
+          <div className="glass rounded-xl p-4 mt-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] uppercase tracking-wide text-text-secondary/60">Pending payouts</p>
+              {payouts.length > 0 && <span className="text-xs text-yellow-400">{payouts.length}</span>}
+            </div>
+            {payouts.length === 0 ? (
+              <p className="text-xs text-text-secondary/50">No pending payouts</p>
+            ) : (
+              <div className="space-y-2">
+                {payouts.map((p) => (
+                  <div key={p.id} className="glass-light rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-green-400">₦{p.amount.toLocaleString()}</span>
+                      <button onClick={() => markPaid(p.id)} className="text-xs px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400">
+                        Mark paid
+                      </button>
+                    </div>
+                    <p className="text-xs text-text-secondary mt-1">{p.account_name} · {p.bank_name}</p>
+                    <p className="text-[11px] text-text-secondary/60 font-mono">{p.account_number}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="glass rounded-xl p-4 mt-3">

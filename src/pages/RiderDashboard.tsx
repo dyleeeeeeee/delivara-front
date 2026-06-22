@@ -25,6 +25,9 @@ export default function RiderDashboard() {
   const { connect, disconnect, send, on } = useWSStore()
   const connected = useWSStore((s) => s.connected)
   const { activeJob, incomingRequest, setActiveJob, setIncomingRequest, updateJobStatus } = useJobsStore()
+  const pendingRequests = useJobsStore((s) => s.pendingRequests)
+  const { addPendingRequest, removePendingRequest, clearPendingRequests } = useJobsStore()
+  const [feedOpen, setFeedOpen] = useState(false)
   const { startWatching, stopWatching, upgradeJobId, currentLat, currentLng, permissionDenied, httpsRequired, requestPermission } = useLocationStore()
   const toast = useToast()
 
@@ -58,12 +61,30 @@ export default function RiderDashboard() {
     return () => disconnect()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Rehydrate an in-progress delivery on mount from the DB (source of truth).
+  // The WS STATE_SNAPSHOT also restores it, but that relies on volatile server
+  // memory — this HTTP path survives a backend restart too.
+  useEffect(() => {
+    let cancelled = false
+    api<{ job: Record<string, unknown> | null }>('/api/jobs/active')
+      .then((res) => {
+        if (cancelled || !res.job) return
+        const { activeJob: cur } = useJobsStore.getState()
+        if (cur) return // WS snapshot already restored it
+        setActiveJob(res.job as never)
+        startWatching(res.job.id as string)
+      })
+      .catch(() => { /* best-effort rehydrate */ })
+    return () => { cancelled = true }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const unsubs = [
       on('JOB_REQUEST', (data) => {
         // Normalize: backend sends job_id, frontend uses .id
         const normalized = { ...data, id: (data.job_id as string) ?? (data.id as string) }
-        setIncomingRequest(normalized as never)
+        addPendingRequest(normalized as never)   // keep it in the live feed…
+        setIncomingRequest(normalized as never)  // …and pop the focused sheet
         toast.show('📦 New delivery request!')
       }),
 
@@ -76,10 +97,12 @@ export default function RiderDashboard() {
         offerJobRef.current = null
         startWatching(fullJob.id as string)
         setIncomingRequest(null)
+        removePendingRequest(fullJob.id as string)
         toast.show('Job accepted!', 'success')
       }),
       on('JOB_TAKEN', (data) => {
         const d = data as { job_id: string }
+        removePendingRequest(d.job_id)   // gone from the live feed for everyone
         const { incomingRequest: req } = useJobsStore.getState()
         if (req && req.id === d.job_id) {
           setIncomingRequest(null)
@@ -156,24 +179,29 @@ export default function RiderDashboard() {
     setIsOnline(false)
     localStorage.setItem('rider_online', 'false')
     stopWatching()
+    clearPendingRequests()   // stop showing requests you can no longer take
+    setFeedOpen(false)
     send('RIDER_OFFLINE', {})
   }
 
-  const acceptJob = () => {
-    toast.show('Accepting job...', 'info')
-    const { incomingRequest: req } = useJobsStore.getState()
+  const acceptRequest = (req?: typeof incomingRequest) => {
+    req = req ?? useJobsStore.getState().incomingRequest
     if (!req) {
       toast.show('Error: No request data found', 'error')
       return
     }
+    toast.show('Accepting job...', 'info')
     send('ACCEPT_JOB', { job_id: req.id })
     // Upgrade the job_id on the existing watch — no GPS restart, no gap in stream
     upgradeJobId(req.id)
     // Optimistically close the modal and show active job UI — JOB_ASSIGNED will
     // fill in full details. Prevents the "old UI" flash while awaiting server.
     setActiveJob({ ...req, status: 'ASSIGNED' } as never)
+    removePendingRequest(req.id)
     setIncomingRequest(null)
+    setFeedOpen(false)
   }
+  const acceptJob = () => acceptRequest()
 
   const sendCounter = () => {
     const { incomingRequest: req } = useJobsStore.getState()
@@ -187,11 +215,14 @@ export default function RiderDashboard() {
     // Pre-arm the location watch in case the vendor accepts.
     upgradeJobId(req.id)
     offerJobRef.current = req as unknown as Record<string, unknown> // remember it so we can restore on decline
+    removePendingRequest(req.id)
     setIncomingRequest(null)
     setCounterOpen(false)
     setCounterFee('')
   }
 
+  // Decline only dismisses the focused sheet — the request stays in the live feed
+  // so a rider who taps Decline by mistake can reopen and still accept it.
   const declineJob = () => {
     setIncomingRequest(null)
     setCounterOpen(false)
@@ -322,7 +353,7 @@ export default function RiderDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={declineJob}
-              className="fixed inset-0 bg-black/60 z-30 cursor-pointer"
+              className="fixed inset-0 bg-black/60 z-[55] cursor-pointer"
             />
 
             <motion.div
@@ -330,7 +361,7 @@ export default function RiderDashboard() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-40 glass rounded-t-3xl flex flex-col"
+              className="fixed bottom-0 left-0 right-0 z-[60] glass rounded-t-3xl flex flex-col"
               style={{ maxHeight: '85vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
             >
               {/* Drag handle */}
@@ -442,6 +473,84 @@ export default function RiderDashboard() {
       </AnimatePresence>
 
 
+      {/* ─── Live requests button — reopen the feed (e.g. after an accidental decline) ─── */}
+      {isOnline && !activeJob && pendingRequests.length > 0 && !incomingRequest && !feedOpen && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setFeedOpen(true)}
+          className="absolute bottom-28 right-4 z-20 glass rounded-2xl px-4 py-3 flex items-center gap-2 glow-primary"
+        >
+          <span className="text-lg">📨</span>
+          <span className="text-sm font-semibold">{pendingRequests.length} request{pendingRequests.length > 1 ? 's' : ''}</span>
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        </motion.button>
+      )}
+
+      {/* ─── Requests feed — full list of open requests, each actionable ─── */}
+      <AnimatePresence>
+        {feedOpen && !incomingRequest && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setFeedOpen(false)}
+              className="fixed inset-0 bg-black/60 z-[55] cursor-pointer"
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed bottom-0 left-0 right-0 z-[60] glass rounded-t-3xl flex flex-col"
+              style={{ maxHeight: '85vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
+            >
+              <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+                <div className="w-10 h-1 bg-white/20 rounded-full" />
+              </div>
+              <div className="px-5 pb-3 flex-shrink-0 border-b border-white/5 flex items-center justify-between">
+                <h3 className="font-bold text-base">Live requests</h3>
+                <span className="text-xs text-text-secondary">{pendingRequests.length} open</span>
+              </div>
+              <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {pendingRequests.length === 0 ? (
+                  <p className="text-sm text-text-secondary text-center py-8">No open requests right now.</p>
+                ) : pendingRequests.map((req) => (
+                  <div key={req.id} className="glass-light rounded-2xl p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-text-secondary/60 uppercase tracking-wide font-medium">Pickup → Dropoff</p>
+                        <p className="text-sm font-medium truncate">{req.pickup_address}</p>
+                        <p className="text-sm text-text-secondary truncate">{req.dropoff_address}</p>
+                      </div>
+                      {typeof req.fee === 'number' && (
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] text-green-400/70 uppercase font-medium">Earn</p>
+                          <p className="text-xl font-extrabold text-green-400 leading-none">₦{req.fee.toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setFeedOpen(false); setIncomingRequest(req as never) }}
+                        className="flex-1 py-2.5 glass-light rounded-xl text-text-primary text-sm font-medium"
+                      >
+                        View
+                      </button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => acceptRequest(req as never)}
+                        className="flex-[2] py-2.5 bg-accent-primary rounded-xl text-white font-bold text-sm glow-primary"
+                      >
+                        {typeof req.fee === 'number' ? `Accept · ₦${req.fee.toLocaleString()}` : 'Accept'}
+                      </motion.button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Active job panel */}
       {activeJob && !incomingRequest && (
         <div className="absolute bottom-28 left-4 right-4 z-10 space-y-3">
@@ -459,7 +568,7 @@ export default function RiderDashboard() {
             <p className="text-sm font-medium">{activeJob.dropoff_address}</p>
           </div>
 
-          {activeJob.status === 'IN_TRANSIT' && !proofUploaded && (
+          {activeJob.status === 'IN_TRANSIT' && (
             <PhotoCapture jobId={activeJob.id} onUploaded={() => setProofUploaded(true)} />
           )}
 

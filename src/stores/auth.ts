@@ -9,7 +9,8 @@ interface User {
   id: string
   phone?: string
   email?: string
-  role: 'vendor' | 'rider'
+  role: 'vendor' | 'rider'        // the experience the user is CURRENTLY in
+  roles?: ('vendor' | 'rider')[]  // every experience the user is allowed to use
   name?: string
   business_name?: string
   identities?: Identity[]
@@ -23,6 +24,7 @@ interface AuthState {
   requestOtp: (contact: string, role: string, method?: 'email' | 'phone') => Promise<string>
   verifyOtp: (contact: string, code: string, role: string, referralCode?: string, method?: 'email' | 'phone') => Promise<void>
   loadUser: () => Promise<void>
+  switchRole: (role: 'vendor' | 'rider') => Promise<void>
   logout: () => void
   clearError: () => void
 }
@@ -78,6 +80,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.removeItem('delivara_token')
       localStorage.removeItem('delivara_user')
     }
+  },
+
+  switchRole: async (role) => {
+    // Flip the active experience (sender <-> rider). The backend grants the role
+    // if missing and returns a fresh token reflecting the new active role.
+    const res = await api<{ token: string; user: User }>('/api/me/switch-role', {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    })
+    localStorage.setItem('delivara_token', res.token)
+    localStorage.setItem('delivara_user', JSON.stringify(res.user))
+    set({ token: res.token, user: res.user })
   },
 
   logout: () => {

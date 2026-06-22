@@ -5,13 +5,11 @@ import { useUIStore } from '../stores/ui'
 const VENDOR_ITEMS = [
   { path: '/vendor', label: 'Home', icon: '⬡' },
   { path: '/history', label: 'History', icon: '◷' },
-  { path: '/ratings', label: 'Ratings', icon: '★' },
 ]
 
 const RIDER_ITEMS = [
   { path: '/rider', label: 'Home', icon: '⬡' },
   { path: '/history', label: 'History', icon: '◷' },
-  { path: '/ratings', label: 'Ratings', icon: '★' },
 ]
 
 export default function GlassNavBar() {

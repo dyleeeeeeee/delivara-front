@@ -6,6 +6,7 @@ import { useLocationStore } from '../stores/location'
 import { useToast } from './Toast'
 import { MAPBOX_TOKEN, MAP_STYLE } from '../lib/mapStyle'
 import { DEFAULT_MAP_CENTER } from '../lib/geo'
+import { createPin } from '../lib/mapPins'
 import PlacesAutocomplete from './PlacesAutocomplete'
 
 interface JobSheetProps {
@@ -62,15 +63,10 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
         interactive: true,
       })
 
-      const el = document.createElement('div')
-      el.style.cssText = `
-        width:32px;height:32px;border-radius:50% 50% 50% 0;
-        background:#6366f1;border:3px solid #fff;
-        transform:rotate(-45deg);cursor:grab;
-        box-shadow:0 4px 12px rgba(99,102,241,0.5);
-      `
+      const el = createPin('dropoff')
+      el.style.cursor = 'grab'
 
-      const marker = new mapboxgl.Marker({ element: el, draggable: true })
+      const marker = new mapboxgl.Marker({ element: el, draggable: true, anchor: 'bottom' })
         .setLngLat(center)
         .addTo(map)
 

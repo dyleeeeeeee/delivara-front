@@ -6,6 +6,7 @@ import Map from '../components/Map'
 import RiderMarker from '../components/RiderMarker'
 import { api } from '../lib/api'
 import { fetchRouteGeoJSON } from '../lib/directions'
+import { createPin, type PinType } from '../lib/mapPins'
 
 interface TrackingJob {
   id: string
@@ -40,10 +41,11 @@ function stepIndex(status: string): number {
   }
 }
 
-function addPin(map: mapboxgl.Map, lng: number, lat: number, color: string) {
-  const el = document.createElement('div')
-  el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color};border:3px solid #05070D;box-shadow:0 0 12px ${color};`
-  return new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map)
+function addPin(map: mapboxgl.Map, lng: number, lat: number, type: PinType) {
+  // Teardrop pin — anchor at the tip so it points exactly at the coordinate.
+  return new mapboxgl.Marker({ element: createPin(type), anchor: 'bottom' })
+    .setLngLat([lng, lat])
+    .addTo(map)
 }
 
 export default function TrackingPage() {
@@ -69,8 +71,8 @@ export default function TrackingPage() {
     const pickup: [number, number] = [job.pickup_lng, job.pickup_lat]
     const dropoff: [number, number] = [job.dropoff_lng, job.dropoff_lat]
 
-    const m1 = addPin(map, pickup[0], pickup[1], '#22c55e')
-    const m2 = addPin(map, dropoff[0], dropoff[1], '#22D3EE')
+    const m1 = addPin(map, pickup[0], pickup[1], 'pickup')
+    const m2 = addPin(map, dropoff[0], dropoff[1], 'dropoff')
 
     const bounds = new mapboxgl.LngLatBounds(pickup, pickup).extend(dropoff)
     map.fitBounds(bounds, { padding: 70, maxZoom: 15, duration: 800 })

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { interpolatePosition } from '../lib/interpolate'
+import { createRiderPuck } from '../lib/mapPins'
 
 interface RiderMarkerProps {
   map: mapboxgl.Map | null
@@ -11,7 +12,6 @@ interface RiderMarkerProps {
 
 export default function RiderMarker({ map, lat, lng, follow = false }: RiderMarkerProps) {
   const markerRef = useRef<mapboxgl.Marker | null>(null)
-  const pulseRef = useRef<HTMLDivElement | null>(null)
   const prevPos = useRef({ lat, lng })
   const animFrame = useRef<number>(0)
   const isFirstUpdate = useRef(true)
@@ -20,34 +20,10 @@ export default function RiderMarker({ map, lat, lng, follow = false }: RiderMark
   useEffect(() => {
     if (!map) return
 
-    // Outer container
-    const el = document.createElement('div')
-    el.style.position = 'relative'
-    el.style.width = '24px'
-    el.style.height = '24px'
+    // Uber-style rider puck (glowing badge + vehicle glyph + pulse ring).
+    const el = createRiderPuck()
 
-    // Pulse ring
-    const pulse = document.createElement('div')
-    pulse.style.cssText = `
-      position:absolute;inset:-8px;border-radius:50%;
-      border:2px solid rgba(34,211,238,0.5);
-      animation:rider-pulse 2s ease-out infinite;
-    `
-    pulseRef.current = pulse
-
-    // Dot
-    const dot = document.createElement('div')
-    dot.style.cssText = `
-      width:24px;height:24px;border-radius:50%;
-      background:#22D3EE;border:3px solid #05070D;
-      box-shadow:0 0 16px rgba(34,211,238,0.7);
-      position:relative;z-index:1;
-    `
-
-    el.appendChild(pulse)
-    el.appendChild(dot)
-
-    // Inject pulse keyframes once
+    // Inject pulse keyframes once (shared id with mapPins / OnlineRidersLayer).
     if (!document.getElementById('rider-pulse-style')) {
       const style = document.createElement('style')
       style.id = 'rider-pulse-style'

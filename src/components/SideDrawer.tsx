@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../stores/ui'
 import { useAuthStore } from '../stores/auth'
+import { useToast } from './Toast'
+import RiderApplicationModal from './RiderApplicationModal'
 
 const MENU_ITEMS = [
   { path: '/', label: 'Dashboard', icon: '⬡' },
@@ -18,28 +20,46 @@ export default function SideDrawer() {
   const user = useAuthStore((s) => s.user)
   const switchRole = useAuthStore((s) => s.switchRole)
   const navigate = useNavigate()
+  const toast = useToast()
   const [switching, setSwitching] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
 
   const go = (path: string) => { navigate(path); toggle() }
 
   // The other experience the user can switch into.
   const otherRole = user?.role === 'rider' ? 'vendor' : 'rider'
-  const otherLabel = otherRole === 'rider' ? 'Switch to Rider' : 'Switch to Sender'
+  const allowedRoles = user?.roles || (user?.role ? [user.role] : [])
+  const isApprovedRider = allowedRoles.includes('rider')
+  // Sending is open to all; becoming a rider needs an approved application.
+  const otherLabel = otherRole === 'vendor' ? 'Switch to Sender' : (isApprovedRider ? 'Switch to Rider' : 'Become a rider')
   const otherIcon = otherRole === 'rider' ? '🏍️' : '📦'
 
   const handleSwitch = async () => {
     if (switching) return
+    // Not an approved rider yet → open the application instead of switching.
+    if (otherRole === 'rider' && !isApprovedRider) {
+      setApplyOpen(true)
+      return
+    }
     setSwitching(true)
     try {
       await switchRole(otherRole)
       navigate(otherRole === 'rider' ? '/rider' : '/vendor')
       toggle()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not switch'
+      if (msg.includes('rider_application_required')) {
+        setApplyOpen(true)
+      } else {
+        toast.show(msg, 'error')
+      }
     } finally {
       setSwitching(false)
     }
   }
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <>
@@ -102,5 +122,7 @@ export default function SideDrawer() {
         </>
       )}
     </AnimatePresence>
+    <RiderApplicationModal open={applyOpen} onClose={() => setApplyOpen(false)} />
+    </>
   )
 }

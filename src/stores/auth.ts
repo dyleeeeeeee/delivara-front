@@ -25,8 +25,18 @@ interface AuthState {
   verifyOtp: (contact: string, code: string, role: string, referralCode?: string, method?: 'email' | 'phone') => Promise<void>
   loadUser: () => Promise<void>
   switchRole: (role: 'vendor' | 'rider') => Promise<void>
+  applyForRider: (fullName: string, phone: string, note?: string) => Promise<void>
+  getRiderApplication: () => Promise<RiderApplication | null>
   logout: () => void
   clearError: () => void
+}
+
+export interface RiderApplication {
+  id: string
+  full_name: string
+  phone: string
+  status: 'pending' | 'approved' | 'rejected'
+  reject_reason?: string
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -92,6 +102,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('delivara_token', res.token)
     localStorage.setItem('delivara_user', JSON.stringify(res.user))
     set({ token: res.token, user: res.user })
+  },
+
+  applyForRider: async (fullName, phone, note) => {
+    await api('/api/me/rider-application', {
+      method: 'POST',
+      body: JSON.stringify({ full_name: fullName, phone, note }),
+    })
+  },
+
+  getRiderApplication: async () => {
+    const res = await api<{ application: RiderApplication | null }>('/api/me/rider-application')
+    return res.application
   },
 
   logout: () => {

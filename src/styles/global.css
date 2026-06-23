@@ -57,7 +57,7 @@
   .liquid-glass {
     position: relative;
     isolation: isolate;
-    background: rgba(var(--lg-tint), 0.55);
+    background: rgba(var(--lg-tint), 0.45);
     backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -96,7 +96,7 @@
   .glass {
     position: relative;
     isolation: isolate;
-    background: rgba(var(--lg-tint), 0.55);
+    background: rgba(var(--lg-tint), 0.45);
     backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     border: 1px solid rgba(255, 255, 255, 0.10);

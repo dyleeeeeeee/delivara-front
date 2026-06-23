@@ -11,11 +11,13 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #05070D;
-    color: #F9FAFB;
+    color: #F4F6FF;
+    background:
+      radial-gradient(140% 100% at 50% -10%, #0E1130 0%, #08091A 45%, #06070F 100%);
     overflow: hidden;
     height: 100dvh;
     width: 100vw;
+    -webkit-font-smoothing: antialiased;
   }
 
   #root {
@@ -26,24 +28,88 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   LIQUID GLASS SYSTEM
-   Apple-style "liquid glass" = translucent tint + saturated/refracted
-   backdrop + specular rim highlights + soft depth shadow. Built on CSS
-   custom properties so every surface shares one tunable recipe. The SVG
-   refraction (#liquid-glass-refract) is layered on as progressive
-   enhancement for Chromium; everywhere else degrades to blur+saturate.
+   AURORA BACKGROUND — the void + drifting holographic blobs.
+   This is what liquidGL refracts on non-map screens.
+   ───────────────────────────────────────────────────────────── */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(140% 100% at 50% -10%, #0E1130 0%, #08091A 50%, #06070F 100%);
+}
+.aurora-blob {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  will-change: transform;
+  animation: aurora-drift 26s ease-in-out infinite;
+}
+.aurora-iris {
+  top: -20%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.85), transparent 60%);
+}
+.aurora-aqua {
+  bottom: -25%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(34, 224, 240, 0.7), transparent 60%);
+  animation-delay: -8s;
+  animation-duration: 32s;
+}
+.aurora-plasma {
+  top: 25%;
+  right: 10%;
+  width: 50vmax;
+  height: 50vmax;
+  background: radial-gradient(circle, rgba(255, 77, 157, 0.55), transparent 60%);
+  animation-delay: -16s;
+  animation-duration: 38s;
+}
+.aurora-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124, 140, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 140, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(120% 100% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, #000 30%, transparent 80%);
+}
+.aurora-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(2, 3, 10, 0.55) 100%);
+}
+
+@keyframes aurora-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(6%, -4%, 0) scale(1.15); }
+  66% { transform: translate3d(-5%, 5%, 0) scale(0.95); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LIQUID GLASS — design tokens shared by the CSS fallback surfaces.
+   liquidGL handles the headline surfaces in WebGL; .glass / .glass-light
+   below are the CSS counterparts used by stacked modals & bottom sheets
+   (where liquidGL's single-plane z-model doesn't fit).
    ───────────────────────────────────────────────────────────── */
 :root {
-  --lg-tint: 14, 18, 30;            /* base glass color (rgb)         */
-  --lg-blur: 18px;                  /* backdrop blur radius           */
-  --lg-saturate: 180%;              /* backdrop saturation boost      */
-  --lg-brightness: 108%;            /* slight lift so map glows show  */
-  /* Rim: bright top-left specular + dark bottom shadow = beveled glass */
+  --lg-tint: 16, 20, 44;
+  --lg-blur: 18px;
+  --lg-saturate: 180%;
+  --lg-brightness: 110%;
   --lg-rim:
     inset 0 1px 0.5px rgba(255, 255, 255, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
     inset 0 -1px 1px rgba(0, 0, 0, 0.35);
-  --lg-depth: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --lg-depth: 0 14px 44px rgba(0, 0, 0, 0.5);
   --lg-sheen: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.14) 0%,
@@ -53,50 +119,21 @@
 }
 
 @layer components {
-  /* Core surface. Use directly or via .glass / .glass-light aliases. */
-  .liquid-glass {
+  /* Base for the React <Glass> (liquidGL) component. liquidGL transparentises
+     the element and renders the refraction behind it; we only provide a
+     hairline + stable stacking. A faint backdrop-blur shows through if WebGL
+     is unavailable and liquidGL's own fallback hasn't applied. */
+  .glass-surface {
     position: relative;
     isolation: isolate;
-    background: rgba(var(--lg-tint), 0.45);
-    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     border: 1px solid rgba(255, 255, 255, 0.10);
-    box-shadow: var(--lg-rim), var(--lg-depth);
   }
 
-  /* Specular sheen sweep across the top-left — the wet-glass highlight. */
-  .liquid-glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: var(--lg-sheen);
-    opacity: 0.9;
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  /* Lighter, faster variant for inputs / chips / nested surfaces. */
-  .liquid-glass-light {
-    position: relative;
-    isolation: isolate;
-    background: rgba(var(--lg-tint), 0.38);
-    backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-      inset 0 1px 0.5px rgba(255, 255, 255, 0.30),
-      inset 0 -1px 1px rgba(0, 0, 0, 0.25);
-  }
-
-  /* ── Backwards-compatible aliases ──
-     The whole app already styles surfaces with .glass / .glass-light.
-     Re-point them at the liquid-glass recipe so the overhaul lands
-     everywhere at once. */
+  /* ── CSS glass surfaces (modals / sheets) ── */
   .glass {
     position: relative;
     isolation: isolate;
-    background: rgba(var(--lg-tint), 0.45);
+    background: rgba(var(--lg-tint), 0.42);
     backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -116,7 +153,7 @@
   .glass-light {
     position: relative;
     isolation: isolate;
-    background: rgba(var(--lg-tint), 0.38);
+    background: rgba(var(--lg-tint), 0.34);
     backdrop-filter: blur(10px) saturate(150%);
     -webkit-backdrop-filter: blur(10px) saturate(150%);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -125,127 +162,26 @@
       inset 0 -1px 1px rgba(0, 0, 0, 0.25);
   }
 
-  /* Opt-in true refraction: warps the backdrop like real glass.
-     Chromium-only (backdrop-filter: url()); harmless elsewhere. */
-  @supports (backdrop-filter: url(#x)) or (-webkit-backdrop-filter: url(#x)) {
-    .liquid-glass.lg-refract,
-    .glass.lg-refract {
-      backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-      -webkit-backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-    }
-    .liquid-glass.lg-refract-strong,
-    .glass.lg-refract-strong {
-      backdrop-filter: url(#liquid-glass-bevel) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-      -webkit-backdrop-filter: url(#liquid-glass-bevel) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
-    }
-  }
-
-  /* Pointer-tracked specular spot. JS sets --mx / --my (in %). */
-  .lg-interactive::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-      120px circle at var(--mx, 50%) var(--my, 0%),
-      rgba(255, 255, 255, 0.22),
-      rgba(255, 255, 255, 0) 60%
-    );
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .lg-interactive:hover::after,
-  .lg-interactive:active::after {
-    opacity: 1;
-  }
-
-  /* ── liquidGL-style bevel ──
-     Compound rim that reads as real beveled glass thickness (their
-     bevelDepth/bevelWidth): bright top + side highlights, dark inner
-     bottom shadow = a lens edge catching light. */
-  .lg-bevel {
-    box-shadow:
-      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.55),
-      inset 1.5px 0 1px rgba(255, 255, 255, 0.18),
-      inset -1.5px 0 1px rgba(255, 255, 255, 0.18),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.10),
-      inset 0 -12px 20px -12px rgba(0, 0, 0, 0.5),
-      inset 0 -2px 2px rgba(0, 0, 0, 0.4),
-      var(--lg-depth);
-  }
-
-  /* ── liquidGL-style animated specular ──
-     A thin diagonal gloss band drifts across the surface over time.
-     Rendered as a dedicated element so it never collides with the
-     ::before sheen / ::after pointer spot. Place as first child. */
-  .lg-glint {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .lg-glint::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -75%;
-    width: 45%;
-    height: 200%;
-    background: linear-gradient(
-      105deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.16) 45%,
-      rgba(255, 255, 255, 0.42) 50%,
-      rgba(255, 255, 255, 0.16) 55%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    transform: rotate(8deg);
-    animation: lg-sweep 7s ease-in-out infinite;
-  }
-
-  /* ── liquidGL-style pointer tilt ──
-     Smooths the 3D rotation JS applies as the cursor moves. */
-  .lg-tilt {
-    transform-style: preserve-3d;
-    transition: transform 0.2s ease-out;
-    will-change: transform;
-  }
-
   .glow-primary {
-    box-shadow: var(--lg-rim), 0 0 24px rgba(99, 102, 241, 0.35), var(--lg-depth);
+    box-shadow: 0 0 28px rgba(124, 92, 255, 0.45), var(--lg-depth);
   }
-
   .glow-accent {
-    box-shadow: var(--lg-rim), 0 0 24px rgba(34, 211, 238, 0.35), var(--lg-depth);
+    box-shadow: 0 0 28px rgba(34, 224, 240, 0.4), var(--lg-depth);
   }
-}
 
-/* ── Intensity presets (à la liquid-glass-component-kit's `intensity`) ──
-   Override the shared tokens to dial the whole recipe up or down. */
-.lg-subtle {
-  --lg-blur: 12px;
-  --lg-saturate: 140%;
-  --lg-brightness: 104%;
-}
-.lg-strong {
-  --lg-blur: 26px;
-  --lg-saturate: 210%;
-  --lg-brightness: 112%;
-}
-
-@keyframes lg-sweep {
-  0%   { transform: translateX(0) rotate(8deg); opacity: 0; }
-  12%  { opacity: 1; }
-  55%  { opacity: 1; }
-  100% { transform: translateX(520%) rotate(8deg); opacity: 0; }
+  /* Gradient text + CTA helpers for the futuristic look. */
+  .text-holo {
+    background: linear-gradient(100deg, #C9C2FF 0%, #7C5CFF 35%, #22E0F0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .btn-iris {
+    background: linear-gradient(120deg, #7C5CFF 0%, #5B7CFF 60%, #22E0F0 130%);
+    box-shadow: 0 8px 28px rgba(124, 92, 255, 0.45);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lg-interactive::after { transition: none; }
-  .lg-glint::before { animation: none; }
-  .lg-tilt { transition: none; }
+  .aurora-blob { animation: none; }
 }

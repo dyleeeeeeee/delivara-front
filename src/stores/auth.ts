@@ -99,9 +99,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       method: 'POST',
       body: JSON.stringify({ role }),
     })
+    // Trust the role we just requested — the fresh token already encodes it.
+    // A server re-read can lag the write and ship a stale role, which would
+    // bounce the user straight back to their old view; this closes that gap.
+    const user = { ...res.user, role }
     localStorage.setItem('delivara_token', res.token)
-    localStorage.setItem('delivara_user', JSON.stringify(res.user))
-    set({ token: res.token, user: res.user })
+    localStorage.setItem('delivara_user', JSON.stringify(user))
+    set({ token: res.token, user })
   },
 
   applyForRider: async (fullName, phone, note) => {

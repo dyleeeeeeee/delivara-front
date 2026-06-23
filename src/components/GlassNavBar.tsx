@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../stores/auth'
 import { useUIStore } from '../stores/ui'
+import Glass from './Glass'
 
 const VENDOR_ITEMS = [
   { path: '/vendor', label: 'Home', icon: '⬡' },
@@ -21,18 +22,15 @@ export default function GlassNavBar() {
 
   const items = user?.role === 'rider' ? RIDER_ITEMS : VENDOR_ITEMS
 
-  const setSpot = (e: React.PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    e.currentTarget.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`)
-    e.currentTarget.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`)
-  }
-
   return (
-    <nav
-      onPointerMove={setSpot}
-      className="liquid-glass lg-refract lg-bevel lg-interactive fixed bottom-4 left-4 right-4 rounded-[28px] px-2 py-2.5 flex items-center justify-around z-50"
+    <Glass
+      className="fixed bottom-4 left-4 right-4 px-2 py-2.5 flex items-center justify-around z-50"
+      style={{ borderRadius: 28 }}
+      refraction={0.02}
+      bevelDepth={0.09}
+      bevelWidth={0.14}
+      specular
     >
-      <span className="lg-glint" aria-hidden />
       <button
         onClick={toggleDrawer}
         className="w-10 h-10 flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
@@ -52,15 +50,18 @@ export default function GlassNavBar() {
               }
             }}
             className={`relative flex flex-col items-center gap-1 px-4 py-1.5 rounded-2xl transition-colors ${
-              active ? 'text-accent-primary' : 'text-text-secondary hover:text-text-primary'
+              active ? 'text-aqua' : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             {active && (
               <motion.span
                 layoutId="nav-active-pill"
                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                className="absolute inset-0 rounded-2xl liquid-glass-light"
-                style={{ boxShadow: 'inset 0 0 0 1px rgba(99,102,241,0.35), 0 0 18px rgba(99,102,241,0.25)' }}
+                className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(120deg, rgba(124,92,255,0.28), rgba(34,224,240,0.22))',
+                  boxShadow: 'inset 0 0 0 1px rgba(124,92,255,0.4), 0 0 20px rgba(124,92,255,0.3)',
+                }}
               />
             )}
             <span className="relative text-lg">{item.icon}</span>
@@ -68,6 +69,6 @@ export default function GlassNavBar() {
           </button>
         )
       })}
-    </nav>
+    </Glass>
   )
 }

@@ -25,26 +25,146 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   LIQUID GLASS SYSTEM
+   Apple-style "liquid glass" = translucent tint + saturated/refracted
+   backdrop + specular rim highlights + soft depth shadow. Built on CSS
+   custom properties so every surface shares one tunable recipe. The SVG
+   refraction (#liquid-glass-refract) is layered on as progressive
+   enhancement for Chromium; everywhere else degrades to blur+saturate.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --lg-tint: 14, 18, 30;            /* base glass color (rgb)         */
+  --lg-blur: 18px;                  /* backdrop blur radius           */
+  --lg-saturate: 180%;              /* backdrop saturation boost      */
+  --lg-brightness: 108%;            /* slight lift so map glows show  */
+  /* Rim: bright top-left specular + dark bottom shadow = beveled glass */
+  --lg-rim:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.35);
+  --lg-depth: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --lg-sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 22%,
+    rgba(255, 255, 255, 0) 55%
+  );
+}
+
 @layer components {
+  /* Core surface. Use directly or via .glass / .glass-light aliases. */
+  .liquid-glass {
+    position: relative;
+    isolation: isolate;
+    background: rgba(var(--lg-tint), 0.55);
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: var(--lg-rim), var(--lg-depth);
+  }
+
+  /* Specular sheen sweep across the top-left — the wet-glass highlight. */
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--lg-sheen);
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Lighter, faster variant for inputs / chips / nested surfaces. */
+  .liquid-glass-light {
+    position: relative;
+    isolation: isolate;
+    background: rgba(var(--lg-tint), 0.38);
+    backdrop-filter: blur(10px) saturate(150%);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+  }
+
+  /* ── Backwards-compatible aliases ──
+     The whole app already styles surfaces with .glass / .glass-light.
+     Re-point them at the liquid-glass recipe so the overhaul lands
+     everywhere at once. */
   .glass {
-    background: rgba(11, 15, 26, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(99, 102, 241, 0.15);
+    position: relative;
+    isolation: isolate;
+    background: rgba(var(--lg-tint), 0.55);
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: var(--lg-rim), var(--lg-depth);
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--lg-sheen);
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: -1;
   }
 
   .glass-light {
-    background: rgba(11, 15, 26, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(99, 102, 241, 0.1);
+    position: relative;
+    isolation: isolate;
+    background: rgba(var(--lg-tint), 0.38);
+    backdrop-filter: blur(10px) saturate(150%);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.30),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Opt-in true refraction: warps the backdrop like real glass.
+     Chromium-only (backdrop-filter: url()); harmless elsewhere. */
+  @supports (backdrop-filter: url(#x)) or (-webkit-backdrop-filter: url(#x)) {
+    .liquid-glass.lg-refract,
+    .glass.lg-refract {
+      backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+      -webkit-backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    }
+  }
+
+  /* Pointer-tracked specular spot. JS sets --mx / --my (in %). */
+  .lg-interactive::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      120px circle at var(--mx, 50%) var(--my, 0%),
+      rgba(255, 255, 255, 0.22),
+      rgba(255, 255, 255, 0) 60%
+    );
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .lg-interactive:hover::after,
+  .lg-interactive:active::after {
+    opacity: 1;
   }
 
   .glow-primary {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: var(--lg-rim), 0 0 24px rgba(99, 102, 241, 0.35), var(--lg-depth);
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+    box-shadow: var(--lg-rim), 0 0 24px rgba(34, 211, 238, 0.35), var(--lg-depth);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-interactive::after { transition: none; }
 }

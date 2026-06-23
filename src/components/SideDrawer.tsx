@@ -75,7 +75,7 @@ export default function SideDrawer() {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-[280px] glass z-[60] flex flex-col p-6"
+            className="fixed left-0 top-0 bottom-0 w-[280px] glass lg-refract z-[60] flex flex-col p-6"
           >
             <div className="mb-8">
               <h2 className="text-xl font-bold text-accent-primary">Delivra</h2>

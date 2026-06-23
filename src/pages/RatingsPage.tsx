@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import Glass from '../components/Glass'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
 import StarRating from '../components/StarRating'
@@ -43,29 +44,31 @@ export default function RatingsPage() {
   return (
     <div className="h-full bg-bg-primary overflow-y-auto pb-24">
       <div className="px-4 pt-12 pb-4">
-        <h1 className="text-xl font-bold">Ratings</h1>
+        <h1 className="text-2xl font-bold text-holo tracking-tight">Ratings</h1>
+        <p className="text-xs text-text-secondary mt-1">Your trust signal</p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-iris border-t-transparent rounded-full animate-spin glow-primary" />
         </div>
       ) : error ? (
-        <p className="text-center text-red-400 text-sm py-12">{error}</p>
+        <p className="text-center text-plasma text-sm py-12">{error}</p>
       ) : (
         <div className="px-4 space-y-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass rounded-xl p-6 text-center"
           >
-            <p className="text-4xl font-bold">{avg.toFixed(1)}</p>
-            <div className="flex justify-center mt-2">
-              <StarRating value={Math.round(avg)} readonly />
-            </div>
-            <p className="text-xs text-text-secondary mt-2">
-              {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
-            </p>
+            <Glass className="rounded-2xl p-6 text-center glow-primary" specular shadow>
+              <p className="text-6xl font-bold text-holo leading-none">{avg.toFixed(1)}</p>
+              <div className="flex justify-center mt-3">
+                <StarRating value={Math.round(avg)} readonly />
+              </div>
+              <p className="text-xs text-text-secondary mt-3 uppercase tracking-widest">
+                {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}
+              </p>
+            </Glass>
           </motion.div>
 
           {ratings.length > 0 && (
@@ -76,16 +79,16 @@ export default function RatingsPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass rounded-xl p-4"
+                  className="glass rounded-2xl p-4 border-l-2 border-iris/40"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <StarRating value={r.score} readonly />
-                    <span className="text-xs text-text-secondary/60 font-mono">
+                    <span className="text-[10px] text-aqua/70 font-mono tracking-tight">
                       {r.job_id?.replace('jobs:', '') || ''}
                     </span>
                   </div>
                   {r.review && (
-                    <p className="text-xs text-text-secondary mt-1">{r.review}</p>
+                    <p className="text-xs text-text-secondary mt-1 leading-relaxed">{r.review}</p>
                   )}
                 </motion.div>
               ))}
@@ -93,7 +96,7 @@ export default function RatingsPage() {
           )}
 
           {ratings.length === 0 && (
-            <p className="text-center text-text-secondary text-sm py-8">No ratings yet</p>
+            <p className="text-center text-text-secondary text-sm py-8 uppercase tracking-widest">No ratings yet</p>
           )}
         </div>
       )}

@@ -14,6 +14,7 @@ import { useJobsStore } from '../stores/jobs'
 import { useNavigate } from 'react-router-dom'
 import { haversineKm, MATCH_RADIUS_KM } from '../lib/geo'
 import { motion, AnimatePresence } from 'framer-motion'
+import Glass from '../components/Glass'
 
 export default function VendorDashboard() {
   const [mapInstance, setMapInstance] = useState<MapboxMap | null>(null)
@@ -206,8 +207,8 @@ export default function VendorDashboard() {
       {/* Reconnecting banner — so a network blip doesn't look like a frozen app */}
       {!connected && (
         <div className="absolute top-0 left-0 right-0 z-40">
-          <div className="bg-yellow-500/90 text-black text-xs font-medium text-center py-1.5 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-black/60 animate-pulse" />
+          <div className="bg-plasma/90 text-white text-xs font-semibold text-center py-1.5 flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
             Reconnecting… your actions will send once you're back online
           </div>
         </div>
@@ -216,12 +217,12 @@ export default function VendorDashboard() {
       {/* Finding a rider — clear feedback while a job is broadcasting */}
       {!activeJob && broadcasting && (
         <div className="absolute top-16 left-4 right-4 z-10">
-          <div className="glass rounded-2xl p-5 text-center">
+          <Glass className="rounded-2xl p-5 text-center" specular shadow>
             <div className="relative mx-auto w-16 h-16 mb-3">
-              <span className="absolute inset-0 rounded-full bg-accent-primary/30 animate-ping" />
-              <span className="absolute inset-0 rounded-full bg-accent-primary/20 flex items-center justify-center text-2xl">🔍</span>
+              <span className="absolute inset-0 rounded-full bg-iris/30 animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-iris/20 flex items-center justify-center text-2xl glow-primary">🔍</span>
             </div>
-            <p className="font-bold">Finding you a rider…</p>
+            <p className="font-bold text-holo text-lg">Finding you a rider…</p>
             <p className="text-xs text-text-secondary mt-1">
               Broadcasting to riders near {broadcasting.pickup_address}. This usually takes under a minute.
             </p>
@@ -233,9 +234,9 @@ export default function VendorDashboard() {
               </p>
             )}
             {typeof broadcasting.fee === 'number' && (
-              <p className="text-[11px] text-accent-secondary mt-1">Dispatch fee ₦{broadcasting.fee.toLocaleString()}</p>
+              <p className="text-[11px] text-aqua mt-1">Dispatch fee ₦{broadcasting.fee.toLocaleString()}</p>
             )}
-          </div>
+          </Glass>
         </div>
       )}
 
@@ -244,7 +245,7 @@ export default function VendorDashboard() {
         <div className="glass rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
           <span
             className={`w-2 h-2 rounded-full animate-pulse ${
-              (nearbyCount ?? onlineCount) > 0 ? 'bg-green-400' : 'bg-yellow-400'
+              (nearbyCount ?? onlineCount) > 0 ? 'bg-lime' : 'bg-plasma'
             }`}
           />
           <span className="text-xs text-text-secondary whitespace-nowrap">
@@ -280,7 +281,7 @@ export default function VendorDashboard() {
               <div className="flex items-end justify-between mb-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Their price</p>
-                  <p className="text-2xl font-bold text-accent-secondary">₦{offer.fee.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-holo">₦{offer.fee.toLocaleString()}</p>
                 </div>
                 {typeof offer.suggested_fee === 'number' && (
                   <p className="text-xs text-text-secondary/60">Suggested ₦{offer.suggested_fee.toLocaleString()}</p>
@@ -300,7 +301,7 @@ export default function VendorDashboard() {
                   onClick={() => {
                     send('RESPOND_OFFER', { job_id: offer.job_id, rider_id: offer.rider_id, fee: offer.fee, accept: true })
                   }}
-                  className="flex-1 py-3 bg-accent-primary rounded-xl text-white text-sm font-bold glow-primary"
+                  className="flex-1 py-3 btn-iris rounded-xl text-white text-sm font-bold glow-primary"
                 >
                   Accept ₦{offer.fee.toLocaleString()}
                 </button>
@@ -323,9 +324,9 @@ export default function VendorDashboard() {
       {/* Active job card */}
       {activeJob && (
         <div className="absolute top-14 left-4 right-4 z-10">
-          <div className="glass rounded-xl p-4">
+          <Glass className="rounded-xl p-4" specular shadow>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Active Delivery</span>
+              <span className="text-sm font-semibold text-text-primary">Active Delivery</span>
               <div className="flex items-center gap-2">
                 <StatusChip status={activeJob.status} />
                 {/* Camera follow toggle */}
@@ -334,7 +335,7 @@ export default function VendorDashboard() {
                     onClick={() => setCameraFollow((v) => !v)}
                     className={`text-xs px-2 py-1 rounded-lg transition-all ${
                       cameraFollow
-                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                        ? 'bg-aqua/20 text-aqua border border-aqua/40 glow-accent'
                         : 'glass-light text-text-secondary'
                     }`}
                   >
@@ -344,10 +345,10 @@ export default function VendorDashboard() {
               </div>
             </div>
             <p className="text-xs text-text-secondary truncate">{activeJob.dropoff_address}</p>
-            <p className="text-[10px] text-text-secondary/60 mt-1 font-mono select-all">
+            <p className="text-[10px] text-aqua/70 mt-1 font-mono select-all">
               {location.origin}/track/{activeJob.tracking_slug}
             </p>
-          </div>
+          </Glass>
         </div>
       )}
 
@@ -370,21 +371,21 @@ export default function VendorDashboard() {
       {/* Rider location pulse when streaming */}
       {riderLocation && !activeJob && (
         <div className="absolute top-14 left-4 right-4 z-10">
-          <div className="glass rounded-xl px-4 py-3 flex items-center gap-2">
+          <Glass className="rounded-xl px-4 py-3 flex items-center gap-2" specular>
             <motion.span
-              className="w-2 h-2 rounded-full bg-cyan-400"
+              className="w-2 h-2 rounded-full bg-aqua glow-accent"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
             />
             <span className="text-xs text-text-secondary">Rider location streaming</span>
-          </div>
+          </Glass>
         </div>
       )}
 
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setSheetOpen(true)}
-        className="fixed bottom-24 right-4 w-14 h-14 bg-accent-primary rounded-full flex items-center justify-center text-2xl text-white glow-primary z-20"
+        className="fixed bottom-24 right-4 w-14 h-14 btn-iris rounded-full flex items-center justify-center text-2xl text-white font-bold glow-primary z-20"
       >
         +
       </motion.button>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../stores/auth'
 import OtpInput from './OtpInput'
 import Map from './Map'
+import Glass from './Glass'
 
 type Step = 'welcome' | 'method' | 'role' | 'email' | 'phone' | 'otp' | 'complete'
 
@@ -124,7 +125,7 @@ export default function Onboarding() {
               <div
                 key={s.id}
                 className={`flex-1 h-1 rounded-full transition-all ${
-                  i <= currentStepIndex ? 'bg-accent-primary' : 'bg-white/20'
+                  i <= currentStepIndex ? 'bg-iris glow-primary' : 'bg-white/20'
                 }`}
               />
             ))}
@@ -138,9 +139,15 @@ export default function Onboarding() {
           initial={{ opacity: 0, y: 24, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="w-full max-w-sm glass rounded-3xl p-8 space-y-6"
-          style={{ boxShadow: '0 8px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.15)' }}
+          className="w-full max-w-sm"
         >
+          <Glass
+            className="rounded-3xl p-8 space-y-6 glow-primary"
+            refraction={0.015}
+            bevelDepth={0.07}
+            bevelWidth={0.12}
+            specular
+          >
           <AnimatePresence mode="wait">
             {step === 'welcome' && (
               <WelcomeScreen key="welcome" onNext={() => setStep('method')} />
@@ -207,6 +214,7 @@ export default function Onboarding() {
               <CompleteScreen key="complete" onContinue={handleComplete} />
             )}
           </AnimatePresence>
+          </Glass>
         </motion.div>
       </div>
     </div>
@@ -228,16 +236,16 @@ function WelcomeScreen({ onNext }: { onNext: () => void }) {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
-          className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-accent-primary/20 border border-accent-primary/30"
+          className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-iris/20 border border-iris/40 glow-primary"
         >
           <span className="text-4xl">🚚</span>
         </motion.div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Delivra</h1>
+          <h1 className="text-holo text-4xl font-extrabold tracking-tight">Delivra</h1>
           <p className="text-text-secondary mt-2 text-sm">
             Tired of chasing dispatch riders across 10 apps?
           </p>
-          <p className="text-accent-primary mt-1 text-sm font-medium">
+          <p className="text-aqua mt-1 text-sm font-medium">
             Send anything, anywhere — one tap.
           </p>
         </div>
@@ -252,7 +260,7 @@ function WelcomeScreen({ onNext }: { onNext: () => void }) {
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onNext}
-        className="w-full py-3.5 bg-accent-primary rounded-xl text-white font-semibold text-sm glow-primary"
+        className="w-full py-3.5 btn-iris rounded-xl text-white font-bold text-sm glow-primary"
       >
         Get Started →
       </motion.button>
@@ -353,20 +361,20 @@ function EmailInput({ value, onChange, onNext, onBack, error, sending }: { value
           onChange={onChange}
           onKeyDown={(e) => e.key === 'Enter' && canContinue && onNext()}
           aria-invalid={!!value && !isValid}
-          className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-accent-primary/50 transition-all"
+          className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-iris/60 transition-all"
         />
 
         {value && (
           <div className="flex items-center gap-2 text-xs">
             {isValid ? (
-              <span className="text-green-400">✓ Looks good</span>
+              <span className="text-lime">✓ Looks good</span>
             ) : (
-              <span className="text-red-400">Enter a valid email</span>
+              <span className="text-plasma">Enter a valid email</span>
             )}
           </div>
         )}
 
-        {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
+        {error && <p className="text-plasma text-xs text-center" role="alert">{error}</p>}
       </div>
 
       <div className="flex gap-3">
@@ -381,7 +389,7 @@ function EmailInput({ value, onChange, onNext, onBack, error, sending }: { value
           whileTap={{ scale: 0.97 }}
           onClick={onNext}
           disabled={!canContinue}
-          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
+          className="flex-1 py-3 btn-iris rounded-xl text-white font-bold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
         >
           {sending ? (<><Spinner /> Sending…</>) : 'Continue'}
         </motion.button>
@@ -426,7 +434,7 @@ function PhoneInput({ value, onChange, onNext, onBack, error, sending }: { value
           onChange={onChange}
           onKeyDown={(e) => e.key === 'Enter' && canContinue && onNext()}
           aria-invalid={!!value && !isValid}
-          className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-accent-primary/50 transition-all"
+          className="w-full px-4 py-3.5 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-iris/60 transition-all"
         />
 
         <p className="text-[11px] text-text-secondary/60">
@@ -436,14 +444,14 @@ function PhoneInput({ value, onChange, onNext, onBack, error, sending }: { value
         {value && (
           <div className="flex items-center gap-2 text-xs">
             {isValid ? (
-              <span className="text-green-400">✓ Looks good</span>
+              <span className="text-lime">✓ Looks good</span>
             ) : (
-              <span className="text-red-400">Enter at least 10 digits</span>
+              <span className="text-plasma">Enter at least 10 digits</span>
             )}
           </div>
         )}
 
-        {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
+        {error && <p className="text-plasma text-xs text-center" role="alert">{error}</p>}
       </div>
 
       <div className="flex gap-3">
@@ -458,7 +466,7 @@ function PhoneInput({ value, onChange, onNext, onBack, error, sending }: { value
           whileTap={{ scale: 0.97 }}
           onClick={onNext}
           disabled={!canContinue}
-          className="flex-1 py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
+          className="flex-1 py-3 btn-iris rounded-xl text-white font-bold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
         >
           {sending ? (<><Spinner /> Sending…</>) : 'Continue'}
         </motion.button>
@@ -483,21 +491,21 @@ function OtpVerification({ contact, method, devCode, otp, onChange, onVerify, on
       </div>
 
       {devCode && (
-        <div className="text-center bg-accent-primary/10 border border-accent-primary/20 rounded-xl py-3 px-4">
+        <div className="text-center glass-light border border-iris/30 rounded-xl py-3 px-4">
           <p className="text-[10px] text-text-secondary mb-1">Your Code</p>
-          <p className="text-accent-primary font-bold font-mono tracking-[0.3em] text-xl">{devCode}</p>
+          <p className="text-holo font-bold font-mono tracking-[0.3em] text-xl">{devCode}</p>
         </div>
       )}
 
       <OtpInput value={otp} onChange={onChange} />
 
-      {error && <p className="text-red-400 text-xs text-center" role="alert">{error}</p>}
+      {error && <p className="text-plasma text-xs text-center" role="alert">{error}</p>}
 
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onVerify}
         disabled={otp.length < 6 || loading}
-        className="w-full py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
+        className="w-full py-3 btn-iris rounded-xl text-white font-bold text-sm disabled:opacity-40 glow-primary flex items-center justify-center gap-2"
       >
         {loading ? (<><Spinner /> Verifying…</>) : 'Verify'}
       </motion.button>
@@ -551,7 +559,7 @@ function RoleSelection({ role, onChange, onNext, referralCode, onReferralChange 
             onClick={() => onChange(r.value)}
             className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
               role === r.value
-                ? 'bg-accent-primary text-white glow-primary'
+                ? 'btn-iris text-white font-bold glow-primary'
                 : 'glass-light text-text-secondary'
             }`}
           >
@@ -565,14 +573,14 @@ function RoleSelection({ role, onChange, onNext, referralCode, onReferralChange 
           placeholder="Referral code (optional)"
           value={referralCode}
           onChange={(e) => onReferralChange(e.target.value)}
-          className="w-full px-4 py-3 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-accent-primary/50 transition-all"
+          className="w-full px-4 py-3 glass-light rounded-xl text-white placeholder:text-text-secondary/50 outline-none text-sm border border-transparent focus:border-iris/60 transition-all"
         />
       )}
 
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onNext}
-        className="w-full py-3 bg-accent-primary rounded-xl text-white font-semibold text-sm glow-primary"
+        className="w-full py-3 btn-iris rounded-xl text-white font-bold text-sm glow-primary"
       >
         Continue →
       </motion.button>
@@ -592,13 +600,13 @@ function CompleteScreen({ onContinue }: { onContinue: () => void }) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring' }}
-        className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/20 border border-green-500/30"
+        className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-lime/20 border border-lime/40 glow-accent"
       >
-        <span className="text-4xl">✓</span>
+        <span className="text-4xl text-lime">✓</span>
       </motion.div>
 
       <div>
-        <h2 className="text-2xl font-bold text-white">Welcome to Delivra!</h2>
+        <h2 className="text-holo text-3xl font-extrabold tracking-tight">Welcome to Delivra!</h2>
         <p className="text-text-secondary mt-2 text-sm">Your account is ready to go</p>
       </div>
 
@@ -611,7 +619,7 @@ function CompleteScreen({ onContinue }: { onContinue: () => void }) {
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onContinue}
-        className="w-full py-3.5 bg-accent-primary rounded-xl text-white font-semibold text-sm glow-primary"
+        className="w-full py-3.5 btn-iris rounded-xl text-white font-bold text-sm glow-primary"
       >
         Start Using Delivra →
       </motion.button>

@@ -235,8 +235,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSubmit}
-              className="w-full py-4 bg-accent-primary rounded-2xl text-white font-bold text-base glow-primary"
-              style={{ boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }}
+              className="w-full py-4 btn-iris rounded-2xl text-white font-bold text-base glow-primary"
             >
               Find a rider →
             </motion.button>
@@ -264,10 +263,10 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
             {/* Header */}
             <div className="flex-shrink-0 px-6 pb-3 flex items-center justify-between">
-              <h3 className="text-lg font-bold">Send a package</h3>
+              <h3 className="text-lg font-bold text-holo">Send a package</h3>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full glass-light flex items-center justify-center text-text-secondary text-sm"
+                className="w-8 h-8 rounded-full glass-light flex items-center justify-center text-text-secondary hover:text-text-primary text-sm transition-colors"
               >✕</button>
             </div>
 
@@ -277,18 +276,18 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
               {/* ── Pickup ── */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-text-secondary/70 uppercase tracking-wide">
+                  <label className="text-xs font-semibold text-aqua/80 uppercase tracking-wide">
                     📍 Pickup
                   </label>
                   <motion.button
                     whileTap={{ scale: 0.94 }}
                     onClick={useMyLocation}
                     disabled={locLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-light text-accent-primary text-xs font-medium relative overflow-hidden"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-light text-iris text-xs font-medium relative overflow-hidden"
                   >
                     {!locLoading && (
                       <motion.span
-                        className="absolute inset-0 rounded-full bg-accent-primary/10"
+                        className="absolute inset-0 rounded-full bg-iris/15"
                         animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
                         transition={{ repeat: Infinity, duration: 2 }}
                       />
@@ -320,7 +319,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
               {/* ── Dropoff ── */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-text-secondary/70 uppercase tracking-wide block">
+                <label className="text-xs font-semibold text-plasma/80 uppercase tracking-wide block">
                   📌 Dropoff
                 </label>
 
@@ -335,7 +334,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
                 <input type="hidden" value={dropoffLng} readOnly />
 
                 {/* Mini map — pin updates when autocomplete fires */}
-                <div className="relative rounded-2xl overflow-hidden border border-white/10" style={{ height: 180 }}>
+                <div className="relative rounded-2xl overflow-hidden border border-aqua/20" style={{ height: 180 }}>
                   <div ref={mapContainerRef} className="absolute inset-0" />
                   <div className="absolute top-2 left-0 right-0 flex justify-center pointer-events-none">
                     <span className="glass text-[10px] text-text-secondary px-3 py-1 rounded-full">
@@ -347,7 +346,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
 
               {/* ── Package ── */}
               <div>
-                <label className="text-xs font-semibold text-text-secondary/70 uppercase tracking-wide block mb-2">
+                <label className="text-xs font-semibold text-iris/80 uppercase tracking-wide block mb-2">
                   📋 Package (optional)
                 </label>
                 <input

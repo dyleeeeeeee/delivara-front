@@ -64,9 +64,9 @@ export default function RiderApplicationModal({ open, onClose }: { open: boolean
             className="fixed bottom-0 left-0 right-0 z-[60] glass rounded-t-3xl flex flex-col"
             style={{ maxHeight: '85vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.5)' }}
           >
-            <div className="flex justify-center pt-3 pb-2"><div className="w-10 h-1 bg-white/20 rounded-full" /></div>
-            <div className="px-5 pb-3 border-b border-white/5">
-              <h3 className="font-bold text-base">Become a rider</h3>
+            <div className="flex justify-center pt-3 pb-2"><div className="w-10 h-1 bg-iris/40 rounded-full" /></div>
+            <div className="px-5 pb-3 border-b border-iris/10">
+              <h3 className="font-bold text-lg text-holo">Become a rider</h3>
               <p className="text-xs text-text-secondary">Earn by delivering for senders near you.</p>
             </div>
 
@@ -74,42 +74,42 @@ export default function RiderApplicationModal({ open, onClose }: { open: boolean
               {!loaded ? (
                 <p className="text-sm text-text-secondary text-center py-6">Loading…</p>
               ) : pending ? (
-                <div className="glass-light rounded-2xl p-4 text-center space-y-1">
+                <div className="glass-light rounded-2xl p-4 text-center space-y-1 shadow-[inset_0_0_0_1px_rgba(34,224,240,0.2)]">
                   <div className="text-2xl">⏳</div>
-                  <p className="text-sm font-medium">Application under review</p>
+                  <p className="text-sm font-medium text-aqua">Application under review</p>
                   <p className="text-xs text-text-secondary">We’ll notify you once you’re approved.</p>
                 </div>
               ) : (
                 <>
                   {rejected && (
-                    <div className="glass-light rounded-xl p-3 border border-red-500/30">
-                      <p className="text-xs text-red-400">Previous application was declined{existing?.reject_reason ? `: ${existing.reject_reason}` : ''}. You can re-apply below.</p>
+                    <div className="glass-light rounded-xl p-3 border border-plasma/30">
+                      <p className="text-xs text-plasma">Previous application was declined{existing?.reject_reason ? `: ${existing.reject_reason}` : ''}. You can re-apply below.</p>
                     </div>
                   )}
                   <div>
-                    <label className="text-[11px] uppercase tracking-wide text-text-secondary/60">Full name</label>
+                    <label className="text-[11px] uppercase tracking-wide text-aqua/70">Full name</label>
                     <input
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Your full name"
-                      className="w-full mt-1 px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none"
+                      className="w-full mt-1 px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none focus:shadow-[inset_0_0_0_1px_rgba(124,92,255,0.5)] transition-shadow"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] uppercase tracking-wide text-text-secondary/60">Phone</label>
+                    <label className="text-[11px] uppercase tracking-wide text-aqua/70">Phone</label>
                     <input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       inputMode="tel"
                       placeholder="080…"
-                      className="w-full mt-1 px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none"
+                      className="w-full mt-1 px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none focus:shadow-[inset_0_0_0_1px_rgba(124,92,255,0.5)] transition-shadow"
                     />
                   </div>
                 </>
               )}
             </div>
 
-            <div className="px-5 pt-3 border-t border-white/5" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-5 pt-3 border-t border-iris/10" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
               {pending ? (
                 <button onClick={onClose} className="w-full py-3 glass-light rounded-xl text-text-secondary text-sm font-medium">Close</button>
               ) : (
@@ -117,7 +117,7 @@ export default function RiderApplicationModal({ open, onClose }: { open: boolean
                   whileTap={{ scale: 0.97 }}
                   onClick={submit}
                   disabled={submitting || !loaded}
-                  className="w-full py-3.5 bg-accent-primary rounded-xl text-white font-bold glow-primary disabled:opacity-50"
+                  className="w-full py-3.5 btn-iris rounded-xl text-white font-bold glow-primary disabled:opacity-50"
                 >
                   {submitting ? 'Submitting…' : 'Submit application'}
                 </motion.button>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import Glass from '../components/Glass'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
 import StatusChip from '../components/StatusChip'
@@ -53,21 +54,21 @@ export default function HistoryPage() {
       animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.98 }}
       transition={{ delay: i * 0.04 }}
-      className={`w-full text-left glass rounded-xl p-4 ${dim ? 'opacity-60' : ''}`}
+      className={`w-full text-left glass-light rounded-xl p-4 transition-shadow ${dim ? 'opacity-60' : 'hover:glow-primary'}`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-mono text-text-secondary/50">{job.tracking_slug}</span>
         <StatusChip status={job.status} />
       </div>
       <div className="flex items-start gap-2 mb-1">
-        <span className="text-accent-primary text-xs mt-0.5 flex-shrink-0">●</span>
+        <span className="text-iris text-xs mt-0.5 flex-shrink-0">●</span>
         <p className="text-sm truncate">{job.pickup_address}</p>
       </div>
       <div className="flex items-start gap-2">
-        <span className="text-cyan-400 text-xs mt-0.5 flex-shrink-0">●</span>
+        <span className="text-aqua text-xs mt-0.5 flex-shrink-0">●</span>
         <p className="text-xs text-text-secondary truncate">{job.dropoff_address}</p>
       </div>
-      <div className="mt-2 flex items-center gap-1 text-[10px] text-accent-primary/80">
+      <div className="mt-2 flex items-center gap-1 text-[10px] text-iris/80">
         <span>🔗</span><span>Tap to copy tracking link</span>
       </div>
     </motion.button>
@@ -75,28 +76,30 @@ export default function HistoryPage() {
 
   return (
     <div className="h-full bg-bg-primary overflow-y-auto pb-24">
-      <div className="px-4 pt-12 pb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Delivery History</h1>
-        {error && (
-          <button onClick={load} className="text-xs text-accent-primary">
-            Retry
-          </button>
-        )}
+      <div className="px-4 pt-12 pb-4">
+        <Glass className="rounded-2xl px-5 py-4 flex items-center justify-between" specular>
+          <h1 className="text-xl font-bold text-holo">Delivery History</h1>
+          {error && (
+            <button onClick={load} className="text-xs text-aqua font-semibold">
+              Retry
+            </button>
+          )}
+        </Glass>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-iris border-t-transparent rounded-full animate-spin glow-primary" />
           <p className="text-xs text-text-secondary">Loading deliveries...</p>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 px-6">
           <span className="text-3xl">⚠️</span>
-          <p className="text-sm text-red-400 text-center">{error}</p>
+          <p className="text-sm text-plasma text-center">{error}</p>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={load}
-            className="mt-2 px-6 py-2.5 bg-accent-primary/20 border border-accent-primary/30 rounded-xl text-accent-primary text-sm"
+            className="mt-2 px-6 py-2.5 btn-iris text-white font-bold rounded-xl text-sm"
           >
             Try again
           </motion.button>

@@ -78,10 +78,10 @@ export default function SideDrawer() {
             className="fixed left-0 top-0 bottom-0 w-[280px] glass z-[60] flex flex-col p-6"
           >
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-accent-primary">Delivra</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-holo">Delivra</h2>
               {user && (
-                <p className="text-xs text-text-secondary mt-1">
-                  {user.role === 'rider' ? 'Rider' : 'Sender'} · {user.phone || user.email}
+                <p className="text-xs text-text-secondary mt-1.5">
+                  <span className="text-aqua font-medium">{user.role === 'rider' ? 'Rider' : 'Sender'}</span> · {user.phone || user.email}
                 </p>
               )}
             </div>
@@ -91,30 +91,30 @@ export default function SideDrawer() {
                 <button
                   key={item.path}
                   onClick={() => go(item.path)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all text-left"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-iris/10 hover:shadow-[inset_0_0_0_1px_rgba(124,92,255,0.25)] transition-all text-left"
                 >
-                  <span>{item.icon}</span>
+                  <span className="text-base text-aqua/80">{item.icon}</span>
                   <span className="text-sm">{item.label}</span>
                 </button>
               ))}
 
               {/* Divider */}
-              <div className="my-2 border-t border-white/5" />
+              <div className="my-3 h-px bg-gradient-to-r from-transparent via-iris/30 to-transparent" />
 
               {/* Switch experience — any user can be both a sender and a rider. */}
               <button
                 onClick={handleSwitch}
                 disabled={switching}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all text-left disabled:opacity-50"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-iris hover:text-white hover:bg-iris/15 hover:shadow-[inset_0_0_0_1px_rgba(124,92,255,0.35)] transition-all text-left disabled:opacity-50"
               >
-                <span>{otherIcon}</span>
-                <span className="text-sm">{switching ? 'Switching…' : otherLabel}</span>
+                <span className="text-base">{otherIcon}</span>
+                <span className="text-sm font-medium">{switching ? 'Switching…' : otherLabel}</span>
               </button>
             </div>
 
             <button
               onClick={() => { logout(); navigate('/login'); toggle() }}
-              className="px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-all text-left text-sm"
+              className="px-4 py-3 rounded-xl text-plasma hover:bg-plasma/10 hover:shadow-[inset_0_0_0_1px_rgba(255,77,157,0.3)] transition-all text-left text-sm font-medium"
             >
               Logout
             </button>

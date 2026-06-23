@@ -19,9 +19,9 @@ export const useToast = create<ToastState>((set) => ({
 }))
 
 const COLORS = {
-  success: 'border-green-500/30',
-  error: 'border-red-500/30',
-  info: 'border-accent-primary/30',
+  success: 'border-lime/40',
+  error: 'border-plasma/40',
+  info: 'border-iris/40',
 }
 
 export default function Toast() {

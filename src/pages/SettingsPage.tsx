@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import Glass from '../components/Glass'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
 import Toast, { useToast } from '../components/Toast'
@@ -97,12 +98,12 @@ export default function SettingsPage() {
   return (
     <div className="h-full bg-bg-primary overflow-y-auto pb-24">
       <div className="px-4 pt-12 pb-4">
-        <h1 className="text-xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold text-holo tracking-tight">Settings</h1>
       </div>
 
       <div className="px-4 space-y-4">
-        <div className="glass rounded-xl p-4 space-y-3">
-          <h2 className="text-sm font-medium text-text-secondary">Profile</h2>
+        <Glass className="rounded-2xl p-4 space-y-3">
+          <h2 className="text-sm font-medium text-aqua">Profile</h2>
 
           <div>
             <label className="text-xs text-text-secondary/60">Name</label>
@@ -138,15 +139,15 @@ export default function SettingsPage() {
             whileTap={{ scale: 0.97 }}
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3 bg-accent-primary rounded-xl text-white font-medium disabled:opacity-40 glow-primary"
+            className="w-full py-3 btn-iris rounded-xl text-white font-bold disabled:opacity-40 glow-primary"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </motion.button>
-        </div>
+        </Glass>
 
         {/* Sign-in methods (linked accounts) */}
-        <div className="glass rounded-xl p-4 space-y-3">
-          <h2 className="text-sm font-medium text-text-secondary">Sign-in methods</h2>
+        <div className="glass rounded-2xl p-4 space-y-3">
+          <h2 className="text-sm font-medium text-aqua">Sign-in methods</h2>
           <div className="space-y-1.5">
             {(user?.identities && user.identities.length > 0
               ? user.identities
@@ -174,7 +175,7 @@ export default function SettingsPage() {
               />
               <div className="flex gap-2">
                 <button onClick={() => setAddKind(null)} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">Cancel</button>
-                <button onClick={sendLinkCode} disabled={linking} className="flex-1 py-2 bg-accent-primary rounded-xl text-sm text-white disabled:opacity-40">{linking ? 'Sending…' : 'Send code'}</button>
+                <button onClick={sendLinkCode} disabled={linking} className="flex-1 py-2 btn-iris rounded-xl text-sm text-white font-bold disabled:opacity-40">{linking ? 'Sending…' : 'Send code'}</button>
               </div>
             </div>
           ) : (
@@ -188,7 +189,7 @@ export default function SettingsPage() {
               />
               <div className="flex gap-2">
                 <button onClick={() => setAddKind(null)} className="flex-1 py-2 glass-light rounded-xl text-sm text-text-secondary">Cancel</button>
-                <button onClick={confirmLink} disabled={linking} className="flex-1 py-2 bg-accent-primary rounded-xl text-sm text-white disabled:opacity-40">{linking ? 'Linking…' : 'Verify & link'}</button>
+                <button onClick={confirmLink} disabled={linking} className="flex-1 py-2 btn-iris rounded-xl text-sm text-white font-bold disabled:opacity-40">{linking ? 'Linking…' : 'Verify & link'}</button>
               </div>
             </div>
           )}
@@ -197,10 +198,10 @@ export default function SettingsPage() {
 
         {/* Referral / invite */}
         {referral && (
-          <div className="glass rounded-xl p-4 space-y-3">
+          <div className="glass rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-text-secondary">Invite & earn</h2>
-              <span className="text-xs text-text-secondary/60">
+              <h2 className="text-sm font-medium text-aqua">Invite & earn</h2>
+              <span className="text-xs font-semibold text-lime">
                 {referral.count} joined
               </span>
             </div>
@@ -211,7 +212,7 @@ export default function SettingsPage() {
               onClick={copyCode}
               className="w-full flex items-center justify-between glass-light rounded-xl px-4 py-3"
             >
-              <span className="text-lg font-bold tracking-[0.2em] text-accent-primary">
+              <span className="text-lg font-bold tracking-[0.2em] text-holo">
                 {referral.code}
               </span>
               <span className="text-xs text-text-secondary/60">Tap to copy</span>
@@ -219,19 +220,19 @@ export default function SettingsPage() {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={shareReferral}
-              className="w-full py-3 bg-green-500/15 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium"
+              className="w-full py-3 bg-lime/15 border border-lime/30 rounded-xl text-lime text-sm font-semibold"
             >
               Share on WhatsApp
             </motion.button>
           </div>
         )}
 
-        <div className="glass rounded-xl p-4">
-          <h2 className="text-sm font-medium text-text-secondary mb-3">Account</h2>
+        <div className="glass rounded-2xl p-4">
+          <h2 className="text-sm font-medium text-aqua mb-3">Account</h2>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={logout}
-            className="w-full py-3 glass-light rounded-xl text-red-400 text-sm font-medium"
+            className="w-full py-3 glass-light rounded-xl text-plasma text-sm font-semibold"
           >
             Log Out
           </motion.button>

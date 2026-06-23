@@ -78,6 +78,8 @@ JOB_COMPLETED
 - Rider marker uses interpolation (no snapping)
 - Camera follows rider unless user overrides
 - Multi-stop routes are visually rendered with styled polylines
+- Created with `preserveDrawingBuffer: true` and registered as a liquidGL live
+  canvas, so the floating glass UI refracts the moving map in real time
 
 ---
 
@@ -99,39 +101,71 @@ Rules:
 
 ---
 
-# 8. 🎨 VISUAL SYSTEM (FUTURISTIC UI)
+# 8. 🎨 VISUAL SYSTEM (LIQUID GLASS / FUTURISTIC)
+
+The UI is built on **liquidGL** (vendored at `src/lib/liquidGL.js`) — real glass
+rendered in WebGL that REFRACTS whatever is behind it (an html2canvas snapshot
+uploaded to a shared GL canvas). It works wherever WebGL + html2canvas do,
+including iOS Safari, and falls back to a CSS blur otherwise.
 
 STYLE:
-- Glass morphism overlays
-- Full-screen immersive map
-- Floating UI elements
-- Motion-driven feedback system
+- Liquid-glass surfaces that genuinely refract the live map / aurora behind them
+- Holographic accents (iris / aqua / plasma) over a deep void
+- Floating, motion-driven UI elements
+- High contrast, premium, legible
 
 BALANCE:
 75% aggressive futuristic UI
 25% subtle clean balance
 
+## 8.1 Two glass surfaces (pick correctly)
+
+- **`<Glass>`** (`src/components/Glass.tsx`) = a real liquidGL WebGL lens. Use it
+  for the 1–4 PRIMARY floating panels per screen (top bars, hero cards, primary
+  CTAs over the map). liquidGL shares ONE z-plane, so do not stack `<Glass>`
+  surfaces above one another and do not nest them.
+- **`.glass` / `.glass-light`** (CSS backdrop classes in `global.css`) = used for
+  modals, bottom sheets, dialog backdrops, inputs, chips, and dense list rows —
+  anything that must stack above other glass or appear many times (cheaper).
+
+## 8.2 liquidGL + the map
+
+liquidGL ignores `<canvas>` in its capture path, so the vendored copy is PATCHED
+to composite a flagged map canvas through its per-frame `<video>` pipeline. The
+Mapbox map is created with `preserveDrawingBuffer: true` and registers its canvas
+via `registerLiveCanvas`, so the glass refracts the LIVE, moving map at frame
+rate. Keep map resolution / lens count modest on mobile (see `LG_RESOLUTION`).
+
 ---
 
-# COLORS
+# COLORS  (deep void + holographic aurora)
 
-bg_primary: #05070D
-bg_secondary: #0B0F1A
+bg_primary (void):      #06070F
+bg_secondary:           #0A0C1A
 
-accent_primary: #6366F1
-accent_secondary: #22D3EE
+iris   (accent_primary):  #7C5CFF   (electric violet — primary CTAs, active state)
+aqua   (accent_secondary):#22E0F0   (plasma cyan — secondary highlights)
+plasma:                   #FF4D9D   (neon magenta — alerts / accents, used sparingly)
+lime:                     #7CF59A   (success / rider-online)
 
-text_primary: #F9FAFB
-text_secondary: #9CA3AF
+text_primary:           #F4F6FF
+text_secondary:         #9AA3C7
+
+Tailwind tokens: `iris` `aqua` `plasma` `lime` `void`, plus aliases
+`accent.primary/secondary`, `bg.primary/secondary`, `text.primary/secondary`.
+Helpers: `text-holo` (gradient heading text), `btn-iris` (gradient primary CTA),
+`glow-primary` / `glow-accent`.
 
 ---
 
 # EFFECTS
 
-blur_light: 8px
-blur_strong: 20px
-glow_primary: indigo soft glow
-shadow_soft: 0 10px 30px rgba(0,0,0,0.4)
+- liquidGL optics: refraction ~0.015, bevelDepth ~0.07, bevelWidth ~0.12,
+  animated specular, drop shadow, optional pointer tilt.
+- Aurora background: drifting holographic blobs + faint grid over the void
+  (`AuroraBackground` — the refraction source on non-map screens).
+- CSS glass: blur_strong 18px / blur_light 10px, saturate ~180%, 1px rim.
+- glow_primary: violet; glow_accent: cyan. shadow_soft: 0 14px 44px rgba(0,0,0,0.5)
 
 ---
 
@@ -139,13 +173,14 @@ shadow_soft: 0 10px 30px rgba(0,0,0,0.4)
 
 LAYERS (bottom → top):
 
-1. Map (reality layer)
-2. Route + rider marker layer
-3. Live indicators (ETA, status chips)
-4. Blur overlays (modals)
-5. Floating UI panels
-6. Glass navigation bar (primary nav)
-7. Collapsed side navigation drawer (secondary nav)
+1. Aurora void background (refraction source on non-map screens)
+2. Map (reality layer; refracted live through the glass)
+3. liquidGL shared WebGL canvas (renders glass refraction for all lenses)
+4. Route + rider marker layer
+5. Live indicators (ETA, status chips)
+6. Floating liquid-glass panels (`<Glass>`)
+7. Glass navigation bar (primary nav)
+8. CSS-glass overlays: bottom sheets, modals, side drawer (stack above glass)
 
 ---
 
@@ -153,10 +188,10 @@ LAYERS (bottom → top):
 
 ## 10.1 Glass Navigation Bar (Primary)
 
-- Floating glass overlay on top of map
-- 1px translucent blur border
-- Minimal navigation only (core actions)
-- Icon-first design
+- Floating liquidGL `<Glass>` surface on top of the map (refracts it live)
+- Beveled glass edge + animated specular
+- Minimal navigation only (core actions); icon-first
+- Active item marked with an iris/aqua gradient pill (animated)
 - Always visible unless modal focus mode is active
 
 ---
@@ -202,6 +237,8 @@ Sections:
 - Spring physics for buttons
 - Smooth camera tracking
 - GPU-accelerated transforms only
+- Glass surfaces refract the moving map in real time; specular gloss drifts
+  across them. Respect `prefers-reduced-motion` (aurora + specular settle).
 
 ---
 

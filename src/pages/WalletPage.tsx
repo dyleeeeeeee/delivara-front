@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import Glass from '../components/Glass'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
 import Toast, { useToast } from '../components/Toast'
@@ -136,7 +137,7 @@ export default function WalletPage() {
   return (
     <div className="h-full bg-bg-primary overflow-y-auto pb-24">
       <div className="px-4 pt-12 pb-3">
-        <h1 className="text-xl font-bold">Wallet</h1>
+        <h1 className="text-xl font-bold text-holo">Wallet</h1>
       </div>
 
       {/* Tabs */}
@@ -150,7 +151,7 @@ export default function WalletPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === t.key ? 'bg-accent-primary text-white' : 'text-text-secondary'
+                tab === t.key ? 'btn-iris text-white' : 'text-text-secondary'
               }`}
             >
               {t.label}
@@ -162,11 +163,11 @@ export default function WalletPage() {
       {/* ─── Wallet tab ─── */}
       {tab === 'wallet' && (
         <div className="px-4 space-y-4 mt-4">
-          <div className="glass rounded-2xl p-5">
+          <Glass className="rounded-2xl p-5">
             <p className="text-xs text-text-secondary/60 uppercase tracking-wide">Balance</p>
-            <p className="text-4xl font-bold mt-1">₦{(wallet?.balance ?? 0).toLocaleString()}</p>
+            <p className="text-4xl font-bold mt-1 text-holo">₦{(wallet?.balance ?? 0).toLocaleString()}</p>
             <p className="text-xs text-text-secondary/60 mt-2">Fund once, send anytime — the rider is paid on delivery.</p>
-          </div>
+          </Glass>
 
           <div className="glass rounded-2xl p-4 space-y-3">
             <h2 className="text-sm font-medium text-text-secondary">Add money</h2>
@@ -175,7 +176,7 @@ export default function WalletPage() {
                 <button
                   key={p}
                   onClick={() => setAmount(String(p))}
-                  className={`px-3 py-2 rounded-xl text-sm ${amount === String(p) ? 'bg-accent-primary text-white' : 'glass-light text-text-secondary'}`}
+                  className={`px-3 py-2 rounded-xl text-sm transition-all ${amount === String(p) ? 'bg-iris text-white' : 'glass-light text-text-secondary'}`}
                 >
                   ₦{p.toLocaleString()}
                 </button>
@@ -185,11 +186,11 @@ export default function WalletPage() {
               <span className="text-text-secondary mr-1">₦</span>
               <input type="number" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Other amount" className="bg-transparent outline-none text-base text-text-primary w-full" />
             </div>
-            <motion.button whileTap={{ scale: 0.97 }} onClick={fund} disabled={funding} className="w-full py-3 bg-accent-primary rounded-xl text-white font-medium disabled:opacity-40 glow-primary">
+            <motion.button whileTap={{ scale: 0.97 }} onClick={fund} disabled={funding} className="w-full py-3 btn-iris rounded-xl text-white font-bold disabled:opacity-40 glow-primary">
               {funding ? 'Redirecting…' : 'Fund with Paystack'}
             </motion.button>
             {wallet && !wallet.paystack_enabled && (
-              <p className="text-[11px] text-yellow-400/80 text-center">Funding is being switched on — check back shortly.</p>
+              <p className="text-[11px] text-aqua/80 text-center">Funding is being switched on — check back shortly.</p>
             )}
           </div>
 
@@ -204,7 +205,7 @@ export default function WalletPage() {
                   return (
                     <div key={i} className="flex items-center justify-between text-sm">
                       <span className="text-text-secondary">{TX_LABEL[t.type] || t.type}</span>
-                      <span className={credit ? 'text-green-400' : 'text-text-primary'}>
+                      <span className={credit ? 'text-lime font-medium' : 'text-text-primary'}>
                         {credit ? '+' : '−'}₦{t.amount.toLocaleString()}
                       </span>
                     </div>
@@ -229,14 +230,14 @@ export default function WalletPage() {
 
       {tab === 'earnings' && isRider && (
         <div className="px-4 space-y-4 mt-4">
-          <div className="rounded-2xl p-6 bg-gradient-to-br from-green-500/15 to-accent-secondary/10 border border-green-500/25">
-            <p className="text-xs text-green-400/70 uppercase tracking-wide">Available to cash out</p>
-            <p className="text-5xl font-bold text-green-400 mt-1">₦{earnings.toLocaleString()}</p>
-          </div>
+          <Glass className="rounded-2xl p-6">
+            <p className="text-xs text-lime/70 uppercase tracking-wide">Available to cash out</p>
+            <p className="text-5xl font-bold text-holo mt-1">₦{earnings.toLocaleString()}</p>
+          </Glass>
 
           {pending && (
-            <div className="glass-light rounded-xl px-4 py-3 flex items-center gap-2 border border-yellow-500/25">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+            <div className="glass-light rounded-xl px-4 py-3 flex items-center gap-2 border border-plasma/25">
+              <span className="w-2 h-2 rounded-full bg-plasma animate-pulse" />
               <span className="text-xs text-text-secondary">Payout of ₦{pending.amount.toLocaleString()} is being processed.</span>
             </div>
           )}
@@ -245,7 +246,7 @@ export default function WalletPage() {
             whileTap={{ scale: 0.97 }}
             onClick={openCashOut}
             disabled={earnings <= 0 || !!pending}
-            className="w-full py-3.5 bg-green-500/90 rounded-xl text-white font-bold disabled:opacity-40"
+            className="w-full py-3.5 bg-lime text-void rounded-xl font-bold disabled:opacity-40 glow-accent"
           >
             {pending ? 'Payout in progress' : 'Cash out'}
           </motion.button>
@@ -262,7 +263,7 @@ export default function WalletPage() {
                 {earningsTx.map((t, i) => (
                   <div key={i} className="flex items-center justify-between text-sm">
                     <span className="text-text-secondary">{TX_LABEL[t.type] || t.type}</span>
-                    <span className={t.type === 'earn' ? 'text-green-400' : 'text-text-primary'}>
+                    <span className={t.type === 'earn' ? 'text-lime font-medium' : 'text-text-primary'}>
                       {t.type === 'earn' ? '+' : '−'}₦{t.amount.toLocaleString()}
                     </span>
                   </div>
@@ -294,7 +295,7 @@ export default function WalletPage() {
               <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank name" className="w-full px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none" />
               <input value={acctNum} onChange={(e) => setAcctNum(e.target.value)} placeholder="Account number" inputMode="numeric" className="w-full px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none" />
               <input value={acctName} onChange={(e) => setAcctName(e.target.value)} placeholder="Account name" className="w-full px-4 py-3 glass-light rounded-xl text-sm text-text-primary outline-none" />
-              <motion.button whileTap={{ scale: 0.97 }} onClick={requestPayout} disabled={submitting} className="w-full py-3 bg-green-500/90 rounded-xl text-white font-bold disabled:opacity-40">
+              <motion.button whileTap={{ scale: 0.97 }} onClick={requestPayout} disabled={submitting} className="w-full py-3 bg-lime text-void rounded-xl font-bold disabled:opacity-40 glow-accent">
                 {submitting ? 'Requesting…' : 'Request payout'}
               </motion.button>
             </motion.div>

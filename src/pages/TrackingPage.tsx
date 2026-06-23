@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
 
 import Map from '../components/Map'
+import Glass from '../components/Glass'
 import RiderMarker from '../components/RiderMarker'
 import { api } from '../lib/api'
 import { fetchRouteGeoJSON } from '../lib/directions'
@@ -182,7 +183,7 @@ export default function TrackingPage() {
   if (!job) {
     return (
       <div className="h-full flex items-center justify-center bg-bg-primary">
-        <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-iris border-t-transparent rounded-full animate-spin glow-primary" />
       </div>
     )
   }
@@ -206,14 +207,18 @@ export default function TrackingPage() {
         <RiderMarker map={mapInstance} lat={riderLat as number} lng={riderLng as number} />
       )}
 
-      {/* Top status banner */}
+      {/* Top status banner — hero floating panel */}
       <div className="absolute top-4 left-4 right-4 z-10">
-        <div className="glass rounded-2xl px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${active >= 4 ? 'bg-green-400' : 'bg-accent-secondary animate-pulse'}`} />
-            <span className="text-sm font-semibold">{headline}</span>
+        <Glass className="rounded-2xl px-4 py-3 glow-primary" specular shadow>
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                active >= 4 ? 'bg-lime shadow-[0_0_10px_rgba(132,255,107,0.7)]' : 'bg-aqua animate-pulse shadow-[0_0_10px_rgba(34,224,240,0.7)]'
+              }`}
+            />
+            <span className="text-sm font-bold text-holo">{headline}</span>
           </div>
-        </div>
+        </Glass>
       </div>
 
       {/* Bottom sheet — details */}
@@ -224,13 +229,13 @@ export default function TrackingPage() {
             {STEPS.map((s, i) => (
               <div key={s.key} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
-                  {i > 0 && <div className={`h-0.5 flex-1 ${i <= active ? 'bg-accent-primary' : 'bg-white/10'}`} />}
+                  {i > 0 && <div className={`h-0.5 flex-1 ${i <= active ? 'bg-iris' : 'bg-white/10'}`} />}
                   <div
                     className={`w-3 h-3 rounded-full shrink-0 ${
-                      i < active ? 'bg-accent-primary' : i === active ? 'bg-accent-secondary ring-4 ring-accent-secondary/20' : 'bg-white/15'
+                      i < active ? 'bg-iris' : i === active ? 'bg-aqua ring-4 ring-aqua/25 shadow-[0_0_10px_rgba(34,224,240,0.6)]' : 'bg-white/15'
                     }`}
                   />
-                  {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 ${i < active ? 'bg-accent-primary' : 'bg-white/10'}`} />}
+                  {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 ${i < active ? 'bg-iris' : 'bg-white/10'}`} />}
                 </div>
                 <span className={`text-[9px] mt-1.5 text-center ${i <= active ? 'text-text-primary' : 'text-text-secondary/50'}`}>
                   {s.label}
@@ -242,7 +247,7 @@ export default function TrackingPage() {
           {/* Route */}
           <div className="glass-light rounded-2xl p-4 space-y-2.5">
             <div className="flex items-start gap-2.5">
-              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-green-400 shrink-0" />
+              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-lime shrink-0 shadow-[0_0_8px_rgba(132,255,107,0.6)]" />
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Pickup</p>
                 <p className="text-sm">{job.pickup_address}</p>
@@ -250,7 +255,7 @@ export default function TrackingPage() {
             </div>
             <div className="ml-1 h-3 border-l border-dashed border-white/15" />
             <div className="flex items-start gap-2.5">
-              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-accent-secondary shrink-0" />
+              <span className="mt-1 w-2.5 h-2.5 rounded-full bg-aqua shrink-0 shadow-[0_0_8px_rgba(34,224,240,0.6)]" />
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-text-secondary/60">Dropoff</p>
                 <p className="text-sm">{job.dropoff_address}</p>
@@ -269,7 +274,7 @@ export default function TrackingPage() {
             {typeof job.fee === 'number' && job.status !== 'COMPLETED' && (
               <div className="glass-light rounded-xl px-3 py-2.5 text-right">
                 <p className="text-[10px] text-text-secondary/60">Dispatch fee</p>
-                <p className="text-sm font-bold text-accent-secondary">
+                <p className="text-sm font-bold text-aqua">
                   ₦{job.fee.toLocaleString()} <span className="text-[10px] font-normal text-text-secondary/60">pay rider</span>
                 </p>
               </div>
@@ -279,10 +284,10 @@ export default function TrackingPage() {
           {/* Growth loop */}
           <a
             href="https://delivra.ng/login"
-            className="block rounded-xl px-4 py-3 text-center bg-accent-primary/10 border border-accent-primary/25 hover:bg-accent-primary/15 transition-colors"
+            className="block rounded-xl px-4 py-3 text-center bg-iris/10 border border-iris/25 hover:bg-iris/15 transition-colors"
           >
             <span className="text-xs text-text-secondary/70">Powered by </span>
-            <span className="text-xs text-accent-primary font-semibold">Delivra</span>
+            <span className="text-xs text-iris font-semibold">Delivra</span>
             <span className="text-sm font-medium text-text-primary"> · Send your own delivery →</span>
           </a>
         </div>

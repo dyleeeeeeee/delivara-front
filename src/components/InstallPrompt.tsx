@@ -90,11 +90,7 @@ export default function InstallPrompt() {
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handleInstall}
-              className="flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-2xl text-white text-sm font-semibold shadow-2xl"
-              style={{
-                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                boxShadow: '0 8px 24px rgba(99,102,241,0.45)',
-              }}
+              className="btn-iris flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-2xl text-white text-sm font-bold shadow-2xl glow-primary"
             >
               <span className="text-base">📲</span>
               <span>Install App</span>
@@ -105,7 +101,7 @@ export default function InstallPrompt() {
               whileTap={{ scale: 0.9 }}
               onClick={dismiss}
               className="ml-2 w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors"
-              style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}
+              style={{ background: 'rgba(124,92,255,0.2)', border: '1px solid rgba(124,92,255,0.35)' }}
             >
               <span className="text-xs">✕</span>
             </motion.button>
@@ -133,16 +129,16 @@ export default function InstallPrompt() {
               style={{
                 background: 'rgba(11,15,26,0.98)',
                 backdropFilter: 'blur(24px)',
-                border: '1px solid rgba(99,102,241,0.2)',
+                border: '1px solid rgba(124,92,255,0.25)',
               }}
             >
               <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6" />
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center text-2xl">
+                <div className="w-12 h-12 rounded-2xl bg-iris/20 border border-iris/35 flex items-center justify-center text-2xl glow-primary">
                   🚚
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">Install Delivara</h3>
+                  <h3 className="font-bold text-holo">Install Delivara</h3>
                   <p className="text-xs text-text-secondary">Add to your home screen</p>
                 </div>
               </div>
@@ -154,8 +150,8 @@ export default function InstallPrompt() {
                   { step: '3', icon: '✅', text: 'Tap "Add" in the top right corner' },
                 ].map(({ step, icon, text }) => (
                   <div key={step} className="flex items-start gap-4">
-                    <div className="w-7 h-7 rounded-full bg-accent-primary/20 border border-accent-primary/30 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-accent-primary">{step}</span>
+                    <div className="w-7 h-7 rounded-full bg-iris/20 border border-iris/35 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-iris">{step}</span>
                     </div>
                     <div className="flex items-center gap-2 pt-0.5">
                       <span>{icon}</span>
@@ -168,7 +164,7 @@ export default function InstallPrompt() {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { setIosSheetOpen(false); dismiss() }}
-                className="w-full mt-6 py-3 bg-accent-primary rounded-2xl text-white font-semibold text-sm"
+                className="btn-iris w-full mt-6 py-3 rounded-2xl text-white font-bold text-sm glow-primary"
               >
                 Got it
               </motion.button>

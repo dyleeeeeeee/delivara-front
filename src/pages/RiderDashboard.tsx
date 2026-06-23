@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Glass from '../components/Glass'
 import Map from '../components/Map'
 import GlassNavBar from '../components/GlassNavBar'
 import SideDrawer from '../components/SideDrawer'
@@ -306,17 +307,25 @@ export default function RiderDashboard() {
 
       {/* Top bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={isOnline ? goOffline : goOnline}
-          className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-            isOnline
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'glass text-text-secondary'
-          }`}
-        >
-          {isOnline ? '● Online' : 'Go Online'}
-        </motion.button>
+        {isOnline ? (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={goOffline}
+            className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-lime/15 text-lime border border-lime/40 glow-accent flex items-center gap-2"
+          >
+            <span className="w-2 h-2 rounded-full bg-lime animate-pulse shadow-[0_0_8px_theme(colors.lime)]" />
+            Online
+          </motion.button>
+        ) : (
+          <Glass
+            onClick={goOnline}
+            className="px-5 py-2.5 rounded-xl font-semibold text-sm text-text-primary cursor-pointer select-none"
+          >
+            <motion.span whileTap={{ scale: 0.95 }} className="block">
+              Go Online
+            </motion.span>
+          </Glass>
+        )}
 
         {activeJob && <StatusChip status={activeJob.status} />}
       </div>
@@ -377,8 +386,8 @@ export default function RiderDashboard() {
                 </div>
                 {typeof incomingRequest.fee === 'number' && (
                   <div className="text-right shrink-0">
-                    <p className="text-[10px] text-green-400/70 uppercase tracking-wide font-medium">You earn</p>
-                    <p className="text-3xl font-extrabold text-green-400 leading-none mt-0.5">
+                    <p className="text-[10px] text-lime/70 uppercase tracking-wide font-medium">You earn</p>
+                    <p className="text-3xl font-extrabold text-lime leading-none mt-0.5">
                       ₦{incomingRequest.fee.toLocaleString()}
                     </p>
                   </div>
@@ -389,7 +398,7 @@ export default function RiderDashboard() {
               <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="glass-light rounded-2xl p-4 space-y-2.5">
                   <div className="flex items-start gap-3">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-accent-primary shrink-0" />
+                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-iris shrink-0 shadow-[0_0_8px_theme(colors.iris)]" />
                     <div>
                       <p className="text-[10px] text-text-secondary/60 uppercase tracking-wide font-medium">Pickup</p>
                       <p className="text-sm font-medium">{incomingRequest.pickup_address}</p>
@@ -397,7 +406,7 @@ export default function RiderDashboard() {
                   </div>
                   <div className="ml-1 h-3 border-l border-dashed border-white/15" />
                   <div className="flex items-start gap-3">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-cyan-400 shrink-0" />
+                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-aqua shrink-0 shadow-[0_0_8px_theme(colors.aqua)]" />
                     <div>
                       <p className="text-[10px] text-text-secondary/60 uppercase tracking-wide font-medium">Dropoff</p>
                       <p className="text-sm font-medium">{incomingRequest.dropoff_address}</p>
@@ -436,7 +445,7 @@ export default function RiderDashboard() {
                       <button onClick={() => setCounterOpen(false)} className="flex-1 py-3 glass-light rounded-xl text-text-secondary text-sm font-medium">
                         Back
                       </button>
-                      <motion.button whileTap={{ scale: 0.97 }} onClick={sendCounter} className="flex-[2] py-3 bg-accent-primary rounded-xl text-white font-bold glow-primary">
+                      <motion.button whileTap={{ scale: 0.97 }} onClick={sendCounter} className="flex-[2] py-3 btn-iris rounded-xl text-white font-bold">
                         Send offer →
                       </motion.button>
                     </div>
@@ -447,7 +456,7 @@ export default function RiderDashboard() {
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={acceptJob}
-                      className="w-full py-3.5 bg-accent-primary rounded-xl text-white font-bold text-base glow-primary"
+                      className="w-full py-3.5 btn-iris rounded-xl text-white font-bold text-base"
                     >
                       {typeof incomingRequest.fee === 'number'
                         ? `Accept · ₦${incomingRequest.fee.toLocaleString()}`
@@ -484,7 +493,7 @@ export default function RiderDashboard() {
         >
           <span className="text-lg">📨</span>
           <span className="text-sm font-semibold">{pendingRequests.length} request{pendingRequests.length > 1 ? 's' : ''}</span>
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
         </motion.button>
       )}
 
@@ -523,8 +532,8 @@ export default function RiderDashboard() {
                       </div>
                       {typeof req.fee === 'number' && (
                         <div className="text-right shrink-0">
-                          <p className="text-[10px] text-green-400/70 uppercase font-medium">Earn</p>
-                          <p className="text-xl font-extrabold text-green-400 leading-none">₦{req.fee.toLocaleString()}</p>
+                          <p className="text-[10px] text-lime/70 uppercase font-medium">Earn</p>
+                          <p className="text-xl font-extrabold text-lime leading-none">₦{req.fee.toLocaleString()}</p>
                         </div>
                       )}
                     </div>
@@ -538,7 +547,7 @@ export default function RiderDashboard() {
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => acceptRequest(req as never)}
-                        className="flex-[2] py-2.5 bg-accent-primary rounded-xl text-white font-bold text-sm glow-primary"
+                        className="flex-[2] py-2.5 btn-iris rounded-xl text-white font-bold text-sm"
                       >
                         {typeof req.fee === 'number' ? `Accept · ₦${req.fee.toLocaleString()}` : 'Accept'}
                       </motion.button>
@@ -554,19 +563,19 @@ export default function RiderDashboard() {
       {/* Active job panel */}
       {activeJob && !incomingRequest && (
         <div className="absolute bottom-28 left-4 right-4 z-10 space-y-3">
-          <div className="glass rounded-2xl p-4">
+          <Glass className="rounded-2xl p-4" specular shadow>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-base">{statusIcons[activeJob.status] || '🚚'}</span>
                 <StatusChip status={activeJob.status} />
               </div>
-              <span className="text-[10px] font-mono text-text-secondary/50">
+              <span className="text-[10px] font-mono text-aqua/60">
                 {activeJob.tracking_slug}
               </span>
             </div>
             <p className="text-xs text-text-secondary mb-0.5">Delivering to</p>
-            <p className="text-sm font-medium">{activeJob.dropoff_address}</p>
-          </div>
+            <p className="text-sm font-medium text-text-primary">{activeJob.dropoff_address}</p>
+          </Glass>
 
           {activeJob.status === 'IN_TRANSIT' && (
             <PhotoCapture jobId={activeJob.id} onUploaded={() => setProofUploaded(true)} />
@@ -580,7 +589,7 @@ export default function RiderDashboard() {
                 whileTap={{ scale: 0.95 }}
                 onClick={submitRating}
                 disabled={rating === 0}
-                className="w-full py-2.5 bg-accent-primary rounded-xl text-white text-sm font-medium disabled:opacity-40"
+                className="w-full py-2.5 btn-iris rounded-xl text-white text-sm font-bold disabled:opacity-40"
               >
                 Submit Rating
               </motion.button>
@@ -591,7 +600,7 @@ export default function RiderDashboard() {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={advanceStatus}
-              className="w-full py-3.5 bg-accent-primary rounded-2xl text-white font-bold glow-primary"
+              className="w-full py-3.5 btn-iris rounded-2xl text-white font-bold"
             >
               {statusLabels[activeJob.status]}
             </motion.button>

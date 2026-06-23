@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion'
 
 const STATUS_COLORS: Record<string, string> = {
-  CREATED: 'bg-gray-500',
-  BROADCASTING: 'bg-yellow-500',
-  ASSIGNED: 'bg-blue-500',
-  PICKED_UP: 'bg-indigo-500',
-  IN_TRANSIT: 'bg-accent-secondary',
-  DELIVERED: 'bg-green-500',
-  COMPLETED: 'bg-green-600',
+  CREATED: 'bg-white/10 text-text-secondary',
+  BROADCASTING: 'bg-plasma/20 text-plasma',
+  ASSIGNED: 'bg-aqua/20 text-aqua',
+  PICKED_UP: 'bg-iris/20 text-iris',
+  IN_TRANSIT: 'bg-iris/25 text-iris glow-primary',
+  DELIVERED: 'bg-lime/20 text-lime',
+  COMPLETED: 'bg-lime/25 text-lime glow-accent',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -28,11 +28,11 @@ export default function StatusChip({ status }: { status: string }) {
   return (
     <motion.div
       layout
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-white ${color}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border border-current/20 ${color}`}
     >
       {pulse && (
         <motion.span
-          className="w-2 h-2 rounded-full bg-white"
+          className="w-2 h-2 rounded-full bg-current"
           animate={{ opacity: [1, 0.3, 1] }}
           transition={{ repeat: Infinity, duration: 1.5 }}
         />

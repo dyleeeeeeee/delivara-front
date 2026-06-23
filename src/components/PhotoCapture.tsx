@@ -88,7 +88,7 @@ export default function PhotoCapture({ jobId, onUploaded }: PhotoCaptureProps) {
             {uploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <motion.div
-                  className="w-8 h-8 border-2 border-accent-secondary border-t-transparent rounded-full"
+                  className="w-8 h-8 border-2 border-aqua border-t-transparent rounded-full"
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
                 />
@@ -113,7 +113,7 @@ export default function PhotoCapture({ jobId, onUploaded }: PhotoCaptureProps) {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={pickPhoto}
-          className="w-full py-8 glass rounded-xl border-dashed border-2 border-accent-primary/30 text-text-secondary hover:text-text-primary transition-all"
+          className="w-full py-8 glass rounded-xl border-dashed border-2 border-iris/40 text-text-secondary hover:text-text-primary transition-all"
         >
           <div className="text-2xl mb-1">📷</div>
           <div className="text-sm">Take delivery photo</div>

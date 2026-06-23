@@ -172,7 +172,7 @@ export default function PlacesAutocomplete({
             background: 'rgba(8,12,22,0.99)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(99,102,241,0.3)',
+            border: '1px solid rgba(124,92,255,0.35)',
             boxShadow: '0 16px 48px rgba(0,0,0,0.8)',
           }}
         >
@@ -181,9 +181,9 @@ export default function PlacesAutocomplete({
               key={p.place_id}
               onMouseDown={(e) => { e.preventDefault(); select(p) }}
               onTouchEnd={(e) => { e.preventDefault(); select(p) }}
-              className="w-full text-left px-4 py-3 flex items-start gap-3 border-b border-white/5 last:border-0 active:bg-white/10 transition-colors"
+              className="w-full text-left px-4 py-3 flex items-start gap-3 border-b border-white/5 last:border-0 active:bg-iris/10 transition-colors"
             >
-              <span className="text-accent-primary flex-shrink-0 mt-0.5">📍</span>
+              <span className="text-iris flex-shrink-0 mt-0.5">📍</span>
               <div className="min-w-0">
                 <p className="text-sm text-white font-medium truncate">{p.main_text}</p>
                 {p.secondary_text && (

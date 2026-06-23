@@ -17,6 +17,8 @@ interface LiquidGlassProps {
   interactive?: boolean
   /** liquidGL-style 3D pointer tilt. Number = max degrees (default 10). */
   tilt?: boolean | number
+  /** Overall effect strength (kit-style preset). Default 'normal'. */
+  intensity?: 'subtle' | 'normal' | 'strong'
   onClick?: () => void
   as?: 'div' | 'button' | 'nav' | 'aside'
 }
@@ -37,6 +39,7 @@ export default function LiquidGlass({
   specular = false,
   interactive = false,
   tilt = false,
+  intensity = 'normal',
   onClick,
   as = 'div',
 }: LiquidGlassProps) {
@@ -71,6 +74,7 @@ export default function LiquidGlass({
     bevel ? 'lg-bevel' : '',
     interactive ? 'lg-interactive' : '',
     tilt ? 'lg-tilt' : '',
+    intensity === 'subtle' ? 'lg-subtle' : intensity === 'strong' ? 'lg-strong' : '',
     className,
   ]
     .filter(Boolean)

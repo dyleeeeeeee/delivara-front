@@ -224,6 +224,19 @@
   }
 }
 
+/* ── Intensity presets (à la liquid-glass-component-kit's `intensity`) ──
+   Override the shared tokens to dial the whole recipe up or down. */
+.lg-subtle {
+  --lg-blur: 12px;
+  --lg-saturate: 140%;
+  --lg-brightness: 104%;
+}
+.lg-strong {
+  --lg-blur: 26px;
+  --lg-saturate: 210%;
+  --lg-brightness: 112%;
+}
+
 @keyframes lg-sweep {
   0%   { transform: translateX(0) rotate(8deg); opacity: 0; }
   12%  { opacity: 1; }

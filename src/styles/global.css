@@ -133,6 +133,11 @@
       backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
       -webkit-backdrop-filter: url(#liquid-glass-refract) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
     }
+    .liquid-glass.lg-refract-strong,
+    .glass.lg-refract-strong {
+      backdrop-filter: url(#liquid-glass-bevel) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+      -webkit-backdrop-filter: url(#liquid-glass-bevel) blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-brightness));
+    }
   }
 
   /* Pointer-tracked specular spot. JS sets --mx / --my (in %). */
@@ -156,6 +161,60 @@
     opacity: 1;
   }
 
+  /* ── liquidGL-style bevel ──
+     Compound rim that reads as real beveled glass thickness (their
+     bevelDepth/bevelWidth): bright top + side highlights, dark inner
+     bottom shadow = a lens edge catching light. */
+  .lg-bevel {
+    box-shadow:
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.55),
+      inset 1.5px 0 1px rgba(255, 255, 255, 0.18),
+      inset -1.5px 0 1px rgba(255, 255, 255, 0.18),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+      inset 0 -12px 20px -12px rgba(0, 0, 0, 0.5),
+      inset 0 -2px 2px rgba(0, 0, 0, 0.4),
+      var(--lg-depth);
+  }
+
+  /* ── liquidGL-style animated specular ──
+     A thin diagonal gloss band drifts across the surface over time.
+     Rendered as a dedicated element so it never collides with the
+     ::before sheen / ::after pointer spot. Place as first child. */
+  .lg-glint {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .lg-glint::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -75%;
+    width: 45%;
+    height: 200%;
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.16) 45%,
+      rgba(255, 255, 255, 0.42) 50%,
+      rgba(255, 255, 255, 0.16) 55%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(8deg);
+    animation: lg-sweep 7s ease-in-out infinite;
+  }
+
+  /* ── liquidGL-style pointer tilt ──
+     Smooths the 3D rotation JS applies as the cursor moves. */
+  .lg-tilt {
+    transform-style: preserve-3d;
+    transition: transform 0.2s ease-out;
+    will-change: transform;
+  }
+
   .glow-primary {
     box-shadow: var(--lg-rim), 0 0 24px rgba(99, 102, 241, 0.35), var(--lg-depth);
   }
@@ -165,6 +224,15 @@
   }
 }
 
+@keyframes lg-sweep {
+  0%   { transform: translateX(0) rotate(8deg); opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { opacity: 1; }
+  100% { transform: translateX(520%) rotate(8deg); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lg-interactive::after { transition: none; }
+  .lg-glint::before { animation: none; }
+  .lg-tilt { transition: none; }
 }

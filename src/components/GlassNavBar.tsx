@@ -30,8 +30,9 @@ export default function GlassNavBar() {
   return (
     <nav
       onPointerMove={setSpot}
-      className="liquid-glass lg-refract lg-interactive fixed bottom-4 left-4 right-4 rounded-[28px] px-2 py-2.5 flex items-center justify-around z-50"
+      className="liquid-glass lg-refract lg-bevel lg-interactive fixed bottom-4 left-4 right-4 rounded-[28px] px-2 py-2.5 flex items-center justify-around z-50"
     >
+      <span className="lg-glint" aria-hidden />
       <button
         onClick={toggleDrawer}
         className="w-10 h-10 flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"

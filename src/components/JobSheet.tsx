@@ -249,7 +249,7 @@ export default function JobSheet({ open, onClose }: JobSheetProps) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="fixed bottom-0 left-0 right-0 glass lg-refract rounded-t-3xl z-40 flex flex-col"
+            className="fixed bottom-0 left-0 right-0 glass lg-refract-strong lg-bevel rounded-t-3xl z-40 flex flex-col"
             style={{ height: '82vh' }}
           >
             {/* Handle */}

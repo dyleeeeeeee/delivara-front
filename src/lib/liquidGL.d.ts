@@ -14,6 +14,8 @@ export interface LiquidGLOptions {
   tilt?: boolean
   tiltFactor?: number
   magnify?: number
+  /** Keep the glass element (and its subtree) clickable instead of click-through. */
+  interactive?: boolean
   on?: { init?: (lens: LiquidGLLens) => void }
 }
 
@@ -27,6 +29,13 @@ export interface LiquidGLRenderer {
   addLiveCanvas: (el: HTMLCanvasElement) => void
   removeLiveCanvas: (el: HTMLCanvasElement) => void
   captureSnapshot: () => void
+  render: () => void
+  /** Internal: when true, liquidGL's own rAF loop is disabled (we drive renders). */
+  useExternalTicker?: boolean
+  /** Internal: id of liquidGL's internal rAF loop, if running. */
+  _rafId?: number | null
+  /** Marker so we install the on-demand ticker only once. */
+  __onDemand?: boolean
 }
 
 export interface LiquidGLFn {

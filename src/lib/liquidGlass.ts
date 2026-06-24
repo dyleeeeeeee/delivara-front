@@ -59,4 +59,60 @@ export function flushMapCanvases() {
 /** Re-capture the static background (call after route / background changes). */
 export function refreshSnapshot() {
   window.__liquidGLRenderer__?.captureSnapshot?.()
+  pulseRender()
+}
+
+/* ── On-demand render scheduler ────────────────────────────────────────────
+   liquidGL ships an unconditional rAF loop that re-renders — re-uploading the
+   full Mapbox texture and recomputing every lens's geometry — on EVERY frame,
+   forever. On mobile that pins the main thread and input events get dropped
+   (the "can't tap buttons / too laggy" symptom).
+
+   We instead switch the renderer to an external ticker and render only when
+   something actually changes:
+     • the map repaints  → its 'render' event (fires per-frame while active,
+                            stops firing when Mapbox goes idle)
+     • the user scrolls / resizes
+     • a <Glass> lens mounts/unmounts, or the background is re-snapshotted
+   When everything is still, nothing renders and the device rests. */
+
+let rafPending = false
+
+function renderer() {
+  return window.__liquidGLRenderer__
+}
+
+/** Take over liquidGL's render loop and drive it on demand. Idempotent. */
+export function installOnDemandTicker() {
+  const r = renderer()
+  if (!r || r.__onDemand) return
+  r.__onDemand = true
+  // Stop liquidGL's internal forever-loop and prevent new lenses from starting one.
+  r.useExternalTicker = true
+  if (r._rafId) {
+    cancelAnimationFrame(r._rafId)
+    r._rafId = null
+  }
+  window.addEventListener('scroll', requestRender, { passive: true })
+  window.addEventListener('resize', requestRender, { passive: true })
+}
+
+/** Render once on the next animation frame (coalesced — many calls → one render). */
+export function requestRender() {
+  if (rafPending || !renderer()) return
+  rafPending = true
+  requestAnimationFrame(() => {
+    rafPending = false
+    renderer()?.render()
+  })
+}
+
+/** Render a few consecutive frames to let async layout / snapshots settle. */
+export function pulseRender(frames = 3) {
+  let n = frames
+  const step = () => {
+    renderer()?.render()
+    if (--n > 0) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
 }

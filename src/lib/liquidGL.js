@@ -1442,7 +1442,11 @@
       this.el.style.backgroundImage = "none";
       this.el.style.background = "transparent";
 
-      this.el.style.pointerEvents = "none";
+      // By default liquidGL makes the glass element click-through (it sits over
+      // real content). When the glass element IS the interactive container
+      // (e.g. a nav bar / panel holding buttons), pass `interactive:true` so its
+      // subtree stays tappable.
+      this.el.style.pointerEvents = this.options.interactive ? "auto" : "none";
 
       this.updateMetrics();
       this.setShadow(this.options.shadow);

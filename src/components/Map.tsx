@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { MAPBOX_TOKEN, MAP_STYLE } from '../lib/mapStyle'
 import { DEFAULT_MAP_CENTER } from '../lib/geo'
-import { registerMapCanvas } from '../lib/liquidGlass'
+import { registerMapCanvas, requestRender, pulseRender } from '../lib/liquidGlass'
 
 interface MapProps {
   onMapReady?: (map: mapboxgl.Map) => void
@@ -41,9 +41,17 @@ export default function Map({ onMapReady, center, zoom = 13 }: MapProps) {
       onMapReady?.(map)
       const canvas = map.getCanvas()
       unregister = registerMapCanvas(canvas)
+      pulseRender()
     })
 
+    // Refract the map only while it's actually repainting. Mapbox fires 'render'
+    // per-frame during pan/zoom/animation and stops when it goes idle, so this
+    // drives the glass exactly as often as the map changes — and no more.
+    const onMapRender = () => requestRender()
+    map.on('render', onMapRender)
+
     return () => {
+      map.off('render', onMapRender)
       unregister?.()
       map.remove()
       mapRef.current = null

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { ensureLiquidGL, flushMapCanvases, refreshSnapshot, LG_RESOLUTION } from '../lib/liquidGlass'
+import { ensureLiquidGL, flushMapCanvases, refreshSnapshot, installOnDemandTicker, pulseRender, LG_RESOLUTION } from '../lib/liquidGlass'
 
 interface LiquidGLContextValue {
   /** True once liquidGL + the shared renderer are ready. */
@@ -42,7 +42,12 @@ export default function LiquidGLProvider({ children }: { children: ReactNode }) 
         shadow: false,
         specular: false,
       })
+      // Replace liquidGL's every-frame loop with a demand-driven ticker so the
+      // page stays responsive — renders are triggered by map repaints, scroll,
+      // resize and lens changes instead of running continuously.
+      installOnDemandTicker()
       flushMapCanvases()
+      pulseRender()
       setReady(true)
     })
     return () => {

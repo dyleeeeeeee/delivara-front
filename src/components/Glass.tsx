@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useLiquidGL } from './LiquidGLProvider'
-import { LG_RESOLUTION } from '../lib/liquidGlass'
+import { LG_RESOLUTION, pulseRender, requestRender } from '../lib/liquidGlass'
 import type { LiquidGLLens } from '../lib/liquidGL'
 
 let uid = 0
@@ -78,8 +78,14 @@ export default function Glass({
         tiltFactor,
         magnify,
         reveal: 'none',
+        // This element holds interactive content — keep it (and its subtree) tappable.
+        interactive: true,
       })
       lensRef.current = (Array.isArray(result) ? result[0] : result) ?? null
+      // Belt-and-suspenders: ensure the container is clickable regardless.
+      el.style.pointerEvents = 'auto'
+      // Draw the freshly-added lens (the on-demand ticker won't otherwise).
+      pulseRender()
     })
 
     return () => {
@@ -88,6 +94,7 @@ export default function Glass({
       if (lensRef.current) {
         window.__liquidGLRenderer__?.removeLens(lensRef.current)
         lensRef.current = null
+        requestRender()
       }
     }
     // Re-create the lens if any optical prop changes.
